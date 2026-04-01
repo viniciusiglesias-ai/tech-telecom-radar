@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- ═══ SEO & IDENTIDADE ═════════════════════════════════════ -->
+  <title>Tech & Telecom Radar Brasil</title>
+  <meta name="description" content="Agregador inteligente de notícias de tecnologia, telecomunicações e resultados corporativos do Brasil. Atualizado diariamente via RSS."/>
+  <meta name="keywords" content="telecom brasil, tecnologia, RSS, notícias, vivo, tim, totvs, anatel, 5G, data center, earnings, resultados, investment banking"/>
+  <meta name="author" content="Tech & Telecom Radar Brasil"/>
+  <meta name="robots" content="index, follow"/>
+
+  <!-- ═══ OPEN GRAPH (WhatsApp, LinkedIn, Facebook) ═══════════ -->
+  <meta property="og:type"        content="website"/>
+  <meta property="og:title"       content="Tech & Telecom Radar Brasil"/>
+  <meta property="og:description" content="Notícias de tech e telecom no Brasil filtradas por data, com destaque para resultados corporativos e M&A."/>
+  <meta property="og:locale"      content="pt_BR"/>
+
+  <!-- ═══ TWITTER CARD ════════════════════════════════════════ -->
+  <meta name="twitter:card"        content="summary"/>
+  <meta name="twitter:title"       content="Tech & Telecom Radar Brasil"/>
+  <meta name="twitter:description" content="Agregador de notícias de tech e telecom do Brasil. Atualização diária via RSS."/>
+
+  <!-- ═══ FAVICON INLINE (SVG — sem arquivo externo necessário) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>"/>
+
+  <!-- ═══ TEMA MOBILE ══════════════════════════════════════════ -->
+  <meta name="theme-color" content="#0b0e14"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+  <!-- ═══ FONTES ═══════════════════════════════════════════════ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --bg:#0b0e14; --bg-card:#111520; --bg-top:#141926; --bg-earnings:#12181f;
+  --border:rgba(255,255,255,.07);
+  --border-acc:rgba(0,200,160,.35);
+  --border-earn:rgba(244,185,66,.40);   /* borda especial earnings */
+  --txt:#e8ecf0; --txt2:#7a8499; --txt3:#4a5468;
+  --green:#00c8a0; --blue:#3b9cff; --orange:#ff7b3a;
+  --red:#ff4d6d; --purple:#9b7fff;
+  --gold:#f4b942;                       /* cor de destaque earnings */
+  --serif:'DM Serif Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-weight:300;line-height:1.65;min-height:100vh}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+header{position:relative;z-index:10;border-bottom:1px solid var(--border);padding:0 clamp(1.5rem,5vw,4rem);background:rgba(11,14,20,.93);backdrop-filter:blur(12px)}
+.header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.4rem 0;flex-wrap:wrap}
+.brand-tag{font-family:var(--mono);font-size:.62rem;font-weight:500;color:var(--green);letter-spacing:.18em;text-transform:uppercase}
+.brand-title{font-family:var(--serif);font-size:clamp(1.25rem,3vw,1.85rem);font-weight:400;letter-spacing:-.01em;line-height:1.1}
+.brand-title span{color:var(--green);font-style:italic}
+.header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem}
+.date-badge{font-family:var(--mono);font-size:.72rem;color:var(--txt2);letter-spacing:.06em}
+.live-dot{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.62rem;color:var(--green);letter-spacing:.1em}
+.live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+
+/* ═══════════════════════════════════════════
+   TICKER
+═══════════════════════════════════════════ */
+.ticker-wrap{position:relative;z-index:9;background:rgba(0,200,160,.06);border-bottom:1px solid var(--border-acc);overflow:hidden;height:34px;display:flex;align-items:center}
+.ticker-label{flex-shrink:0;font-family:var(--mono);font-size:.6rem;font-weight:500;letter-spacing:.15em;color:var(--green);background:rgba(0,200,160,.12);padding:0 1rem;height:100%;display:flex;align-items:center;text-transform:uppercase;border-right:1px solid var(--border-acc)}
+.ticker-scroll{display:flex;animation:scroll-ticker 55s linear infinite;white-space:nowrap;will-change:transform}
+.ticker-scroll:hover{animation-play-state:paused}
+.ticker-item{font-family:var(--mono);font-size:.65rem;color:var(--txt2);padding:0 2.5rem;letter-spacing:.04em}
+.ticker-item strong{color:var(--txt);font-weight:500}
+.ticker-item .up{color:var(--green)} .ticker-item .dn{color:var(--red)}
+@keyframes scroll-ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ═══════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════ */
+main{position:relative;z-index:5;max-width:1280px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.5rem,5vw,4rem)}
+
+/* ═══════════════════════════════════════════
+   MARKET SUMMARY
+═══════════════════════════════════════════ */
+.market-summary{border:1px solid var(--border-acc);background:linear-gradient(135deg,rgba(0,200,160,.05),rgba(11,14,20,0) 60%);padding:2rem 2.25rem;margin-bottom:3rem;position:relative;overflow:hidden}
+.market-summary::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent)}
+.ms-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.1rem;flex-wrap:wrap}
+.ms-header h2{font-family:var(--serif);font-size:clamp(1rem,2vw,1.2rem);font-weight:400;letter-spacing:-.01em}
+.summary-badge{font-family:var(--mono);font-size:.58rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:.2rem .6rem;border-radius:2px;background:rgba(0,200,160,.1);color:var(--green);border:1px solid rgba(0,200,160,.25)}
+.ms-body{font-size:.9rem;font-weight:300;color:var(--txt2);line-height:1.85}
+.ms-body strong{color:var(--txt);font-weight:500}
+.ms-body .earnings-highlight{color:var(--gold);font-weight:500}
+
+/* ═══════════════════════════════════════════
+   SECTION LABEL
+═══════════════════════════════════════════ */
+.section-label{display:flex;align-items:center;gap:.75rem;margin-bottom:1.75rem}
+.section-label h2{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--txt2)}
+.section-label-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+/* Variante dourada para seção earnings */
+.section-label.earn h2{color:var(--gold)}
+.section-label.earn .section-label-line{background:linear-gradient(90deg,rgba(244,185,66,.3),transparent)}
+
+/* ═══════════════════════════════════════════
+   LOAD SCREEN
+═══════════════════════════════════════════ */
+#load-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5rem 2rem;text-align:center;gap:1.5rem}
+.load-icon{font-size:2.5rem;opacity:.22;line-height:1}
+.load-hint{font-family:var(--mono);font-size:.7rem;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase}
+.feed-pills{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.25rem}
+.feed-pill{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .7rem;border-radius:2px;background:rgba(59,156,255,.08);color:var(--blue);border:1px solid rgba(59,156,255,.2)}
+.feed-pill.earn-pill{background:rgba(244,185,66,.08);color:var(--gold);border-color:rgba(244,185,66,.25)}
+.btn-load{display:inline-flex;align-items:center;gap:.65rem;font-family:var(--mono);font-size:.75rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#0b0e14;background:var(--green);border:none;padding:.85rem 2rem;cursor:pointer;border-radius:2px;transition:opacity .2s,transform .2s,box-shadow .2s;box-shadow:0 0 24px rgba(0,200,160,.35)}
+.btn-load:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 4px 32px rgba(0,200,160,.5)}
+.btn-load:active{transform:translateY(0)}
+.btn-load:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ═══════════════════════════════════════════
+   LOADING STATE
+═══════════════════════════════════════════ */
+#loading-state{display:none;flex-direction:column;align-items:center;padding:5rem 2rem;gap:1.25rem}
+.loading-bar-wrap{width:260px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.loading-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:2px;animation:loading-sweep 1.1s ease-in-out infinite;transform-origin:left}
+@keyframes loading-sweep{0%{transform:translateX(-100%) scaleX(.4)}50%{transform:translateX(60%) scaleX(.6)}100%{transform:translateX(200%) scaleX(.4)}}
+.loading-text{font-family:var(--mono);font-size:.68rem;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase}
+
+/* ═══════════════════════════════════════════
+   NEWS CONTENT
+═══════════════════════════════════════════ */
+#news-content{display:none}
+
+/* ═══════════════════════════════════════════
+   GRIDS
+═══════════════════════════════════════════ */
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5px;margin-bottom:0}
+.top-grid .card:first-child{grid-column:1/-1}
+@media(max-width:780px){.top-grid{grid-template-columns:1fr}.top-grid .card:first-child{grid-column:auto}}
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1px}
+/* Grid específico para earnings — 2 colunas fixas para destaque */
+.earnings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1.5px}
+@media(max-width:520px){.news-grid,.earnings-grid{grid-template-columns:1fr}}
+
+/* ═══════════════════════════════════════════
+   CARD BASE
+═══════════════════════════════════════════ */
+.card{background:var(--bg-card);border:1px solid var(--border);padding:2rem 2.25rem;position:relative;overflow:hidden;transition:border-color .25s,background .25s,transform .2s;cursor:default}
+.card:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.02);transform:translateY(-2px)}
+
+/* Top card overrides */
+.top-grid .card{background:var(--bg-top);border-color:var(--border-acc)}
+.top-grid .card:first-child{padding:2.5rem 2.75rem}
+.top-grid .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),transparent)}
+
+/* ───────────────────────────────────────────
+   EARNINGS CARD — destaque visual especial
+   Borda dourada + linha superior âmbar + fundo levemente distinto.
+   Identificado pela classe .card-earnings.
+─────────────────────────────────────────── */
+.card-earnings{
+  background:var(--bg-earnings);
+  border:1px solid var(--border-earn) !important;  /* borda dourada */
+  box-shadow:0 0 0 1px rgba(244,185,66,.08), inset 0 0 40px rgba(244,185,66,.02);
+}
+.card-earnings::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),rgba(244,185,66,.3),transparent);
+}
+.card-earnings:hover{
+  border-color:rgba(244,185,66,.65) !important;
+  background:rgba(244,185,66,.03);
+  transform:translateY(-2px);
+}
+
+/* Métricas financeiras dentro do card de earnings */
+.earnings-metrics{
+  display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;margin-bottom:.25rem;
+}
+.earnings-metric{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.28rem .65rem;border-radius:2px;
+  background:rgba(244,185,66,.07);color:var(--gold);
+  border:1px solid rgba(244,185,66,.2);
+}
+.earnings-metric.positive{color:var(--green);background:rgba(0,200,160,.07);border-color:rgba(0,200,160,.2)}
+.earnings-metric.negative{color:var(--red);background:rgba(255,77,109,.07);border-color:rgba(255,77,109,.2)}
+
+/* ═══════════════════════════════════════════
+   CARD META / CONTENT
+═══════════════════════════════════════════ */
+.card-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;flex-wrap:wrap}
+.card-tag{font-family:var(--mono);font-size:.58rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:.2rem .55rem;border-radius:2px}
+/* Tags padrão */
+.tag-ma        {background:rgba(0,200,160,.12);color:var(--green); border:1px solid rgba(0,200,160,.25)}
+.tag-regulacao {background:rgba(59,156,255,.12);color:var(--blue);  border:1px solid rgba(59,156,255,.25)}
+.tag-telecom   {background:rgba(155,127,255,.12);color:var(--purple);border:1px solid rgba(155,127,255,.25)}
+.tag-tecnologia{background:rgba(255,123,58,.12);color:var(--orange);border:1px solid rgba(255,123,58,.25)}
+.tag-investimentos{background:rgba(244,185,66,.12);color:var(--gold);border:1px solid rgba(244,185,66,.25)}
+.tag-mercado   {background:rgba(255,77,109,.12);color:var(--red);   border:1px solid rgba(255,77,109,.25)}
+/* Tag especial earnings */
+.tag-earnings{
+  background:rgba(244,185,66,.18);color:var(--gold);
+  border:1px solid rgba(244,185,66,.45);
+  font-weight:600;letter-spacing:.18em;
+}
+.card-date{font-family:var(--mono);font-size:.6rem;color:var(--txt3);margin-left:auto}
+.card-title{font-family:var(--serif);font-size:clamp(1.05rem,2vw,1.3rem);font-weight:400;color:var(--txt);line-height:1.3;margin-bottom:1rem;letter-spacing:-.01em}
+.top-grid .card:first-child .card-title{font-size:clamp(1.2rem,2.5vw,1.65rem)}
+.card-body{font-size:.875rem;font-weight:300;color:var(--txt2);line-height:1.75}
+.card-body strong{color:var(--txt);font-weight:500}
+.card-footer{margin-top:1.25rem;padding-top:.9rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.card-earnings .card-footer{border-top-color:rgba(244,185,66,.15)}
+.card-footer-label{font-family:var(--mono);font-size:.56rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em}
+.card-source-link{font-family:var(--mono);font-size:.6rem;color:var(--txt3);text-decoration:none;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
+.card-source-link:hover{color:var(--blue);border-bottom-color:rgba(59,156,255,.4)}
+
+/* Badges */
+.top-badge{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.56rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--green);background:rgba(0,200,160,.08);border:1px solid rgba(0,200,160,.2);padding:.22rem .65rem;border-radius:2px}
+.top-badge::before{content:'★';font-size:.5rem}
+.earn-badge{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.56rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);background:rgba(244,185,66,.1);border:1px solid rgba(244,185,66,.35);padding:.22rem .65rem;border-radius:2px}
+.earn-badge::before{content:'📊';font-size:.65rem;line-height:1}
+
+/* ═══════════════════════════════════════════
+   FILTER BAR
+═══════════════════════════════════════════ */
+.filter-bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.filter-btn{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:.35rem .9rem;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--txt3);cursor:pointer;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--green);color:var(--green);background:rgba(0,200,160,.07)}
+.filter-btn[data-filter="resultados"]:hover,
+.filter-btn[data-filter="resultados"].active{border-color:var(--gold);color:var(--gold);background:rgba(244,185,66,.07)}
+
+/* ═══════════════════════════════════════════
+   FEED META BAR
+═══════════════════════════════════════════ */
+.feed-meta-bar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.75rem;font-family:var(--mono);font-size:.6rem;color:var(--txt3);letter-spacing:.06em}
+.feed-meta-item{display:flex;align-items:center;gap:.35rem}
+.feed-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.feed-dot.err{background:var(--red)}
+
+/* ═══════════════════════════════════════════
+   EMPTY / ERROR STATES
+═══════════════════════════════════════════ */
+.empty-state{grid-column:1/-1;text-align:center;padding:4rem 2rem;font-family:var(--mono);font-size:.75rem;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;line-height:2}
+.empty-state span{display:block;font-size:2rem;opacity:.2;margin-bottom:1rem}
+.error-banner{border:1px solid rgba(255,77,109,.25);background:rgba(255,77,109,.05);padding:1.25rem 1.5rem;margin-bottom:2rem;font-family:var(--mono);font-size:.68rem;color:var(--red);letter-spacing:.04em;line-height:1.8;border-radius:2px}
+
+/* ═══════════════════════════════════════════
+   SECTION SPACING
+═══════════════════════════════════════════ */
+.section-block{margin-bottom:4rem}
+
+/* ═══════════════════════════════════════════
+   EARNINGS SECTION WRAPPER — destaque visual
+═══════════════════════════════════════════ */
+#earnings-section{
+  border:1px solid rgba(244,185,66,.2);
+  background:linear-gradient(135deg,rgba(244,185,66,.03) 0%,transparent 60%);
+  padding:1.75rem 1.75rem 2rem;
+  margin-bottom:3.5rem;
+  position:relative;
+}
+#earnings-section::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),rgba(244,185,66,.3),transparent);
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card.anim-ready{opacity:0}
+.card.anim-in{animation:fadeUp .5s ease both}
+.card.hidden{display:none}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+footer{position:relative;z-index:5;border-top:1px solid var(--border);padding:2rem clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+footer p{font-family:var(--mono);font-size:.62rem;color:var(--txt3);letter-spacing:.06em}
+.disclaimer{font-size:.56rem;opacity:.6}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER ══════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="brand-tag">Investment Banking · Market Intelligence</div>
+      <h1 class="brand-title">Tech &amp; Telecom <span>Radar</span> Brasil</h1>
+    </div>
+    <div class="header-meta">
+      <span class="date-badge" id="date-ref">—</span>
+      <span class="live-dot" id="live-label">Aguardando busca</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════ TICKER ══════════════════════════════════ -->
+<div class="ticker-wrap" aria-hidden="true">
+  <span class="ticker-label">Mercado</span>
+  <div class="ticker-scroll" id="ticker"></div>
+</div>
+
+<!-- ══════════════════ MAIN ════════════════════════════════════ -->
+<main>
+
+  <!-- MARKET SUMMARY — sempre visível -->
+  <section class="market-summary">
+    <div class="ms-header">
+      <h2>Resumo do Mercado — Tech &amp; Telecom Brasil</h2>
+      <span class="summary-badge" id="summary-date">—</span>
+    </div>
+    <div class="ms-body" id="summary-body">
+      Clique em <strong>"Carregar notícias do dia"</strong> para gerar o resumo analítico
+      com base nas manchetes de hoje e ontem, incluindo resultados corporativos.
+    </div>
+  </section>
+
+  <!-- LOAD SCREEN -->
+  <div id="load-screen">
+    <div class="load-icon">📡</div>
+    <p class="load-hint">Fontes prontas — janela dinâmica: hoje e ontem</p>
+    <button class="btn-load" id="btn-load">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="#0b0e14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Carregar notícias do dia
+    </button>
+    <div class="feed-pills">
+      <span class="feed-pill">Teletime RSS</span>
+      <span class="feed-pill">Telesíntese RSS</span>
+      <span class="feed-pill">Valor Econômico RSS</span>
+      <span class="feed-pill">InfoMoney RSS</span>
+      <span class="feed-pill earn-pill">Money Times RSS</span>
+      <span class="feed-pill earn-pill">+ Earnings Detector</span>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="loading-state">
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+    <p class="loading-text" id="loading-text">Iniciando busca…</p>
+  </div>
+
+  <!-- NEWS CONTENT -->
+  <div id="news-content">
+    <div id="error-area"></div>
+    <div class="feed-meta-bar" id="feed-meta"></div>
+
+    <!-- ── EARNINGS SECTION (condicional — só aparece se houver resultados) ── -->
+    <div id="earnings-section" style="display:none">
+      <div class="section-label earn" style="margin-bottom:1.5rem">
+        <h2>📊 Resultados Corporativos — Tech &amp; Telecom</h2>
+        <div class="section-label-line"></div>
+      </div>
+      <div class="earnings-grid" id="earnings-grid"></div>
+    </div>
+
+    <!-- ── TOP INSIGHTS ── -->
+    <section class="section-block">
+      <div class="section-label">
+        <h2>★ Top Insights</h2>
+        <div class="section-label-line"></div>
+      </div>
+      <div class="top-grid" id="top-grid"></div>
+    </section>
+
+    <!-- ── FILTER BAR ── -->
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-btn active" data-filter="all">Todas</button>
+    </div>
+
+    <!-- ── NOTÍCIAS DO DIA ── -->
+    <section class="section-block">
+      <div class="section-label">
+        <h2>Notícias do Dia</h2>
+        <div class="section-label-line"></div>
+      </div>
+      <div class="news-grid" id="news-grid"></div>
+    </section>
+  </div>
+
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════════════════════ -->
+<footer>
+  <p>© <span id="year"></span> Tech &amp; Telecom Radar Brasil — Uso interno / IB</p>
+  <p class="disclaimer">RSS público · Janela dinâmica: hoje + ontem · Earnings detector ativo · Sem APIs pagas</p>
+</footer>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT — ARQUITETURA COMPLETA
+     ────────────────────────────────────────────────────────────
+     §1   Datas dinâmicas (never hardcoded)
+     §2   Feeds RSS + Proxies CORS com fallback
+     §3   Keywords gerais de relevância
+     §4   EARNINGS DETECTOR — lógica de detecção de resultados
+     §5   Fetcher com fallback de proxies
+     §6   Parser XML → objetos JS
+     §7   Filtros: janela temporal + relevância + dedup
+     §8   Classificador de categoria
+     §9   Ranker editorial
+     §10  Render (earnings section + top + news)
+     §11  Resumo de mercado com awareness de earnings
+     §12  Bootstrap (botão → loading → fetch → render)
+     §13  Ticker
+══════════════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+/* ──────────────────────────────────────────────────────────────
+   §1  DATAS DINÂMICAS
+   Toda a janela temporal é calculada a partir de new Date().
+   Funciona corretamente em qualquer data futura sem alteração.
+────────────────────────────────────────────────────────────── */
+const _NOW = new Date();
+
+const _TODAY = new Date(_NOW);
+_TODAY.setHours(0, 0, 0, 0);
+
+const _YESTERDAY = new Date(_TODAY);
+_YESTERDAY.setDate(_TODAY.getDate() - 1);
+
+const WINDOW_START = _YESTERDAY;                          // ontem 00:00:00
+const WINDOW_END   = new Date(_TODAY);
+WINDOW_END.setHours(23, 59, 59, 999);                    // hoje 23:59:59
+
+function fmtDate(d) {
+  const m = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+document.getElementById('date-ref').textContent     = `Referência: ${fmtDate(_YESTERDAY)} – ${fmtDate(_TODAY)}`;
+document.getElementById('summary-date').textContent = fmtDate(_NOW);
+document.getElementById('year').textContent         = _NOW.getFullYear();
+
+
+/* ──────────────────────────────────────────────────────────────
+   §2  FEEDS RSS + PROXIES CORS
+   5 feeds cobrem telecom, tech e mercado financeiro (earnings).
+   3 proxies em fallback — se um cair, o próximo assume.
+────────────────────────────────────────────────────────────── */
+const FEEDS = [
+  { url:'https://teletime.com.br/feed/',            name:'Teletime',        domain:'teletime.com.br' },
+  { url:'https://telesintese.com.br/feed/',         name:'Telesíntese',     domain:'telesintese.com.br' },
+  { url:'https://valor.globo.com/rss/',             name:'Valor Econômico', domain:'valor.globo.com' },
+  { url:'https://www.infomoney.com.br/feed/',       name:'InfoMoney',       domain:'infomoney.com.br' },
+  { url:'https://www.moneytimes.com.br/mercados/feed/', name:'Money Times', domain:'moneytimes.com.br' },
+];
+
+const CORS_PROXIES = [
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,   // 4º fallback
+];
+
+
+/* ──────────────────────────────────────────────────────────────
+   §3  KEYWORDS GERAIS DE RELEVÂNCIA
+   Garante foco em tech, telecom e mercado financeiro.
+────────────────────────────────────────────────────────────── */
+const KEYWORDS = [
+  'telecom','telefon','fibra','banda larga','5g','4g','anatel','operadora',
+  'claro','vivo','tim ','oi ','v.tal','mvno','espectro','satélite','sky ',
+  'zaaz','brisanet','desktop ','alloha','intelbras','unifique',
+  'tecnologia','inteligência artificial',' ia ','data center','cloud',
+  'software','saas','startup','fintech','cibersegurança','lgpd','iot','redata',
+  'fusão','aquisição','m&a','ipo','captação','investimento','valuation',
+  'private equity','venture','regulação','regulatório','receita','ebitda',
+  'lucro','resultado','balanço','b3','bolsa','mercado','dividendo',
+  'totvs','locaweb','lwsa','positivo','méliuz','enjoei','multilaser',
+  'ericsson','nokia','huawei','google','meta','microsoft','amazon',
+];
+
+
+/* ──────────────────────────────────────────────────────────────
+   §4  EARNINGS DETECTOR
+   ────────────────────────────────────────────────────────────
+   COMO FUNCIONA:
+   Uma notícia é classificada como "earnings" se o título ou
+   descrição conter palavras-chave de resultados E mencionar
+   pelo menos uma empresa-alvo do universo tech/telecom listado.
+
+   KEYWORDS_EARNINGS: termos que indicam divulgação de balanço.
+   EARNINGS_COMPANIES: empresas monitoradas para resultados.
+   EARNINGS_TICKERS:   tickers usados como alternativa de busca.
+
+   isEarnings(item) → true se for notícia de resultados.
+   extractMetrics(item) → extrai métricas financeiras do texto
+     para exibição nos badges do card (receita, EBITDA, etc.).
+────────────────────────────────────────────────────────────── */
+
+// Palavras que indicam divulgação/cobertura de resultados financeiros
+const KEYWORDS_EARNINGS = [
+  'resultado','resultados','balanço','balanço trimestral','balanço anual',
+  '1t26','2t26','3t26','4t26','1t25','2t25','3t25','4t25',
+  'itr','dfp','demonstrações financeiras','earnings','earning',
+  'receita líquida','receita bruta','ebitda','ebit','lucro líquido',
+  'lucro bruto','prejuízo','margem ebitda','margem líquida',
+  'guidance','projeção de resultado','prévia de resultado',
+  'divulgou resultado','apresentou resultado','reportou resultado',
+  'temporada de resultado','balanço financeiro','resultado financeiro',
+  'lucro por ação','lpa','receita total','crescimento de receita',
+  'resultado operacional','fluxo de caixa','geração de caixa',
+];
+
+// Empresas brasileiras de tech/telecom monitoradas para earnings
+const EARNINGS_COMPANIES = [
+  'telefônica','vivo','vivt','tim brasil','tims','oi ',
+  'totvs','tots','locaweb','lwsa','positivo tecnologia','positivo ',
+  'méliuz','meli3','enjoei','multi ','multilaser','brisanet','brsr',
+  'desktop','intelbras','alloha','unifique','desktop ',
+  'cielo','ciel','getnet','stone','pagseguro',
+];
+
+// Tickers B3 como alternativa de detecção
+const EARNINGS_TICKERS = [
+  'vivt3','tims3','oibr3','oibr4',
+  'tots3','lwsa3','posi3','meli3','enju3',
+  'ciel3','stne','pags',
+];
+
+/**
+ * Detecta se um item de feed é uma notícia de resultados financeiros.
+ * Estratégia em duas etapas:
+ *   1. Verifica se há keyword de earnings no texto.
+ *   2. Verifica se há empresa-alvo OU ticker no texto.
+ * Ambas as condições precisam ser verdadeiras.
+ * @param {object} item - objeto de notícia parseado
+ * @returns {boolean}
+ */
+function isEarnings(item) {
+  const hay = (item.title + ' ' + item.desc).toLowerCase();
+
+  // Etapa 1: tem keyword de earnings?
+  const hasEarningsKw = KEYWORDS_EARNINGS.some(kw => hay.includes(kw));
+  if (!hasEarningsKw) return false;
+
+  // Etapa 2: menciona empresa ou ticker relevante?
+  const hasCompany = EARNINGS_COMPANIES.some(c => hay.includes(c));
+  const hasTicker  = EARNINGS_TICKERS.some(t => hay.includes(t));
+
+  return hasCompany || hasTicker;
+}
+
+/**
+ * Extrai métricas financeiras mencionadas no texto.
+ * Retorna array de { label, value, sentiment } para exibir
+ * nos badges do card de earnings.
+ * Não inventa dados — só extrai padrões encontrados no texto.
+ * @param {object} item
+ * @returns {Array<{label:string, value:string, sentiment:string}>}
+ */
+function extractMetrics(item) {
+  const text = (item.title + ' ' + item.desc).toLowerCase();
+  const metrics = [];
+
+  // Padrões de crescimento/variação
+  const growthPatterns = [
+    { re:/crescimento\s+de\s+([\d,]+%)/i,          label:'Crescimento' },
+    { re:/alta\s+de\s+([\d,]+%)/i,                  label:'Alta' },
+    { re:/queda\s+de\s+([\d,]+%)/i,                 label:'Queda' },
+    { re:/avanço\s+de\s+([\d,]+%)/i,                label:'Avanço' },
+    { re:/recuo\s+de\s+([\d,]+%)/i,                 label:'Recuo' },
+    { re:/variação\s+de\s+([\d,]+%)/i,              label:'Variação' },
+  ];
+
+  // Padrões de valores financeiros
+  const valuePatterns = [
+    { re:/receita[^R]{0,20}r\$\s*([\d,\.]+\s*(?:bilh|milh)?ões?)/i, label:'Receita' },
+    { re:/ebitda[^R]{0,20}r\$\s*([\d,\.]+\s*(?:bilh|milh)?ões?)/i,  label:'EBITDA' },
+    { re:/lucro[^R]{0,20}r\$\s*([\d,\.]+\s*(?:bilh|milh)?ões?)/i,   label:'Lucro' },
+    { re:/prejuízo[^R]{0,20}r\$\s*([\d,\.]+\s*(?:bilh|milh)?ões?)/i,label:'Prejuízo' },
+  ];
+
+  // Detecta período do resultado
+  const periodMatch = text.match(/([1-4]t\d{2,4})/i);
+  if (periodMatch) metrics.push({ label:'Período', value: periodMatch[1].toUpperCase(), sentiment:'neutral' });
+
+  // Extrai crescimentos/quedas
+  for (const p of growthPatterns) {
+    const m = item.desc.match(p.re);
+    if (m) {
+      const isNeg = ['queda','recuo'].includes(p.label.toLowerCase());
+      metrics.push({ label: p.label, value: m[1], sentiment: isNeg ? 'negative' : 'positive' });
+      break; // máximo 1 por tipo
+    }
+  }
+
+  // Extrai valores financeiros
+  for (const p of valuePatterns) {
+    const m = item.desc.match(p.re);
+    if (m && metrics.length < 4) {
+      const isNeg = p.label === 'Prejuízo';
+      metrics.push({ label: p.label, value: m[1], sentiment: isNeg ? 'negative' : 'neutral' });
+    }
+  }
+
+  // Indicadores de resultado (positivo/negativo)
+  if (text.includes('lucro acima') || text.includes('supera estimativa') || text.includes('bate consensus')) {
+    metrics.push({ label:'Consenso', value:'Acima ↑', sentiment:'positive' });
+  } else if (text.includes('abaixo do esperado') || text.includes('decepciona') || text.includes('abaixo das estimativas')) {
+    metrics.push({ label:'Consenso', value:'Abaixo ↓', sentiment:'negative' });
+  }
+
+  return metrics.slice(0, 4); // máximo 4 badges
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §5  FETCHER COM FALLBACK DE PROXIES
+────────────────────────────────────────────────────────────── */
+async function fetchWithFallback(feedUrl) {
+  for (const makeProxy of CORS_PROXIES) {
+    try {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+      const res   = await fetch(makeProxy(feedUrl), { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.includes('<item') || text.includes('<entry') || text.includes('<rss')) return text;
+    } catch (_) { /* tenta próximo proxy */ }
+  }
+  return null;
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §6  PARSER XML → OBJETOS JS
+   Suporta RSS 2.0 (<item>) e Atom (<entry>).
+────────────────────────────────────────────────────────────── */
+function parseXML(xmlText, sourceName) {
+  const doc   = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const rss   = Array.from(doc.querySelectorAll('item'));
+  const atom  = Array.from(doc.querySelectorAll('entry'));
+  const nodes = rss.length ? rss : atom;
+
+  return nodes.reduce((acc, node) => {
+    const get = s => node.querySelector(s)?.textContent?.trim() ?? '';
+    const rawDate = get('pubDate') || get('published') || get('updated') || get('dc\\:date') || '';
+    const date    = rawDate ? new Date(rawDate) : null;
+    if (!date || isNaN(date)) return acc;
+
+    let link = get('link');
+    if (!link) link = node.querySelector('link')?.getAttribute('href') ?? '';
+    link = link.replace(/^<!\[CDATA\[/,'').replace(/\]\]>$/,'').trim();
+    if (!link.startsWith('http')) return acc;
+
+    const rawDesc  = get('description') || get('summary') || get('content') || '';
+    const cleanDesc = rawDesc.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,500);
+    const title     = get('title').replace(/<[^>]+>/g,'').trim();
+    if (!title) return acc;
+
+    acc.push({ title, link, date, desc: cleanDesc, source: sourceName });
+    return acc;
+  }, []);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §7  FILTROS: JANELA TEMPORAL + RELEVÂNCIA + DEDUPLICAÇÃO
+────────────────────────────────────────────────────────────── */
+const isInWindow = item => item.date >= WINDOW_START && item.date <= WINDOW_END;
+
+function isRelevant(item) {
+  const hay = (item.title + ' ' + item.desc).toLowerCase();
+  // Earnings são sempre relevantes se na janela
+  if (isEarnings(item)) return true;
+  return KEYWORDS.some(kw => hay.includes(kw));
+}
+
+function dedup(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = item.title.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,55);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §8  CLASSIFICADOR DE CATEGORIA
+   Earnings têm prioridade máxima antes das demais regras.
+────────────────────────────────────────────────────────────── */
+const CAT_RULES = [
+  // Earnings sempre identificados primeiro
+  { keys:KEYWORDS_EARNINGS,
+    tag:'Resultados', cls:'tag-earnings', cat:'resultados' },
+  { keys:['fusão','aquisição','m&a','compra','venda','ipo','captação','deal','consolidação'],
+    tag:'M&A',           cls:'tag-ma',           cat:'ma' },
+  { keys:['anatel','regulação','regulatório','lei ','edital','cade','consulta pública','tomada de subsídios','marco legal'],
+    tag:'Regulação',     cls:'tag-regulacao',    cat:'regulacao' },
+  { keys:['investimento','aporte','private equity','venture','fundo','redata','incentivo fiscal'],
+    tag:'Investimentos', cls:'tag-investimentos', cat:'investimentos' },
+  { keys:['receita','ebitda','lucro','balanço','valuation','dividendo','ação','bolsa'],
+    tag:'Mercado',       cls:'tag-mercado',       cat:'mercado' },
+  { keys:['telecom','telefon','operadora','5g','4g','fibra','banda larga','claro','vivo','tim ','oi ','sky ','mvno','espectro','satélite'],
+    tag:'Telecom',       cls:'tag-telecom',       cat:'telecom' },
+  { keys:['inteligência artificial',' ia ','data center','cloud','software','saas','startup','iot','cibersegurança'],
+    tag:'Tecnologia',    cls:'tag-tecnologia',    cat:'tecnologia' },
+];
+
+function classify(item) {
+  // Verifica earnings primeiro (antes das regras genéricas)
+  if (isEarnings(item)) return CAT_RULES[0];
+  const hay = (item.title + ' ' + item.desc).toLowerCase();
+  for (const rule of CAT_RULES.slice(1)) {
+    if (rule.keys.some(k => hay.includes(k))) return rule;
+  }
+  return { tag:'Tech/Telecom', cls:'tag-telecom', cat:'telecom' };
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §9  RANKER
+   Earnings têm peso máximo (7) — sempre no topo.
+────────────────────────────────────────────────────────────── */
+const CAT_WEIGHT = { resultados:7, ma:6, regulacao:5, investimentos:4, mercado:3, telecom:2, tecnologia:1 };
+
+function rankItems(items) {
+  return items
+    .map(item => ({ item, cat: classify(item), score: CAT_WEIGHT[classify(item).cat] ?? 0 }))
+    .sort((a, b) => b.score - a.score || b.item.date - a.item.date);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §10  RENDER
+────────────────────────────────────────────────────────────── */
+function esc(s='') {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/**
+ * Constrói HTML do card de earnings com métricas extraídas.
+ * Usa classe .card-earnings para o estilo dourado diferenciado.
+ */
+function buildEarningsCard(ranked) {
+  const { item } = ranked;
+  const metrics  = extractMetrics(item);
+  const metricsHtml = metrics.length
+    ? `<div class="earnings-metrics">${metrics.map(m =>
+        `<span class="earnings-metric ${m.sentiment === 'positive' ? 'positive' : m.sentiment === 'negative' ? 'negative' : ''}">
+           ${esc(m.label)}: ${esc(m.value)}
+         </span>`
+      ).join('')}</div>`
+    : '';
+
+  return `
+    <div class="card card-earnings anim-ready" data-category="resultados">
+      <div class="card-meta">
+        <span class="earn-badge">Resultados</span>
+        <span class="card-tag tag-earnings">Earnings</span>
+        <span class="card-date">${fmtDate(item.date)}</span>
+      </div>
+      <h2 class="card-title">${esc(item.title)}</h2>
+      <p class="card-body">${esc(item.desc.slice(0,360))}${item.desc.length>360?'…':''}</p>
+      ${metricsHtml}
+      <div class="card-footer">
+        <span class="card-footer-label">Fonte:</span>
+        <a class="card-source-link" href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">
+          ${esc(item.source)} ↗
+        </a>
+      </div>
+    </div>`;
+}
+
+/**
+ * Constrói HTML de um card padrão (top ou regular).
+ */
+function buildCard(ranked, isTop) {
+  const { item, cat } = ranked;
+  const topBadge = isTop ? `<span class="top-badge">Top Insight</span>` : '';
+  const preview  = item.desc.slice(0,340) + (item.desc.length > 340 ? '…' : '');
+  return `
+    <div class="card anim-ready" data-category="${cat.cat}">
+      <div class="card-meta">
+        ${topBadge}
+        <span class="card-tag ${cat.cls}">${esc(cat.tag)}</span>
+        <span class="card-date">${fmtDate(item.date)}</span>
+      </div>
+      <h2 class="card-title">${esc(item.title)}</h2>
+      <p class="card-body">${esc(preview)}</p>
+      <div class="card-footer">
+        <span class="card-footer-label">Fonte:</span>
+        <a class="card-source-link" href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">
+          ${esc(item.source)} ↗
+        </a>
+      </div>
+    </div>`;
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §11  RESUMO DE MERCADO
+   Gera síntese analítica IB. Se houver earnings, menciona
+   explicitamente com destaque dourado.
+────────────────────────────────────────────────────────────── */
+function buildSummary(earningsItems, otherRanked) {
+  const allRanked = [...earningsItems.map(i => ({ item:i, cat:CAT_RULES[0] })), ...otherRanked];
+  if (!allRanked.length) return 'Nenhuma notícia relevante encontrada na janela de 24h.';
+
+  const cats   = otherRanked.map(r => r.cat.cat);
+  const period = `${fmtDate(_YESTERDAY)}–${fmtDate(_TODAY)}`;
+
+  const parts = [
+    `O período <strong>${period}</strong> concentra movimentações de alta relevância estratégica no setor de Tech &amp; Telecom brasileiro.`
+  ];
+
+  // Earnings — seção principal se houver
+  if (earningsItems.length) {
+    const companies = [...new Set(earningsItems.map(i => {
+      const hay = i.title.toLowerCase();
+      if (hay.includes('vivo') || hay.includes('telefônica')) return 'Vivo (VIVT3)';
+      if (hay.includes('tim')) return 'TIM Brasil (TIMS3)';
+      if (hay.includes('totvs') || hay.includes('tots')) return 'Totvs (TOTS3)';
+      if (hay.includes('locaweb') || hay.includes('lwsa')) return 'Locaweb (LWSA3)';
+      if (hay.includes('positivo') || hay.includes('posi')) return 'Positivo (POSI3)';
+      if (hay.includes('méliuz') || hay.includes('meli3')) return 'Méliuz (MELI3)';
+      if (hay.includes('enjoei')) return 'Enjoei (ENJU3)';
+      if (hay.includes('cielo')) return 'Cielo (CIEL3)';
+      return null;
+    }).filter(Boolean))];
+
+    const compStr = companies.length
+      ? companies.join(', ')
+      : 'empresas do setor';
+
+    parts.push(
+      `<span class="earnings-highlight">📊 Temporada de Resultados:</span> ` +
+      `Foram identificadas ${earningsItems.length} publicação(ões) de resultados financeiros ` +
+      `(${compStr}) na janela de 24h. Analistas devem avaliar impacto no guidance, ` +
+      `múltiplos de valuation e alocação setorial antes da abertura do mercado.`
+    );
+  }
+
+  if (cats.includes('ma'))           parts.push(`No eixo de <strong>M&amp;A</strong>, operações de consolidação seguem como principal vetor de reconfiguração competitiva em infraestrutura digital e telecom.`);
+  if (cats.includes('regulacao'))    parts.push(`O ambiente <strong>regulatório</strong> permanece ativo, com Anatel e Congresso avançando na agenda de supervisão de plataformas digitais e redes.`);
+  if (cats.includes('investimentos'))parts.push(`O fluxo de <strong>investimentos em data centers e fibra</strong> mantém trajetória ascendente, sustentado por incentivos fiscais e demanda estrutural de IA.`);
+  if (cats.includes('telecom'))      parts.push(`Em <strong>telecomunicações</strong>, a disputa por convergência fixo-móvel e novos modelos B2B domina a agenda estratégica das operadoras.`);
+  if (cats.includes('tecnologia'))   parts.push(`Em <strong>tecnologia</strong>, adoção de IA avança do discurso à execução, com ganhos mensuráveis de produtividade e novas linhas de receita digital.`);
+
+  parts.push(`<strong>Visão consolidada:</strong> o período aponta para um mercado em transição estrutural — disciplina de capital, busca por sinergias reais e crescente pressão regulatória sobre plataformas digitais. Para analistas de IB, os vetores prioritários são: consolidação em fibra/ISPs, agenda regulatória de IA e impacto dos resultados trimestrais nos múltiplos do setor.`);
+
+  return parts.join(' ');
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   FUNÇÃO PRINCIPAL DE RENDER
+   Separa earnings dos demais, renderiza seção condicional.
+────────────────────────────────────────────────────────────── */
+function renderAll(ranked) {
+  // Separação: earnings vs demais
+  const earningsRanked = ranked.filter(r => r.cat.cat === 'resultados');
+  const otherRanked    = ranked.filter(r => r.cat.cat !== 'resultados');
+
+  // ── SEÇÃO EARNINGS (condicional) ──
+  const earningsSec = document.getElementById('earnings-section');
+  const earningsGrid = document.getElementById('earnings-grid');
+  if (earningsRanked.length) {
+    earningsGrid.innerHTML = earningsRanked.map(r => buildEarningsCard(r)).join('');
+    earningsSec.style.display = 'block';
+  } else {
+    earningsSec.style.display = 'none';
+  }
+
+  // ── TOP INSIGHTS (dos não-earnings) ──
+  const topItems = otherRanked.slice(0, 2);
+  const topGrid  = document.getElementById('top-grid');
+  topGrid.innerHTML = topItems.length
+    ? topItems.map(r => buildCard(r, true)).join('')
+    : `<div class="empty-state"><span>📭</span>Nenhum top insight nas últimas 24h</div>`;
+
+  // ── NOTÍCIAS REGULARES ──
+  const regularItems = otherRanked.slice(2, 10);
+  const newsGrid     = document.getElementById('news-grid');
+  newsGrid.innerHTML = regularItems.length
+    ? regularItems.map(r => buildCard(r, false)).join('')
+    : `<div class="empty-state"><span>📭</span>Nenhuma notícia relevante nas últimas 24h</div>`;
+
+  // ── FILTROS DINÂMICOS ──
+  const filterBar = document.getElementById('filter-bar');
+  filterBar.innerHTML = '<button class="filter-btn active" data-filter="all">Todas</button>';
+  const catLabels = {
+    resultados:'📊 Resultados', ma:'M&A', regulacao:'Regulação',
+    telecom:'Telecom', tecnologia:'Tecnologia',
+    investimentos:'Investimentos', mercado:'Mercado',
+  };
+  const allCats = [...new Set(ranked.map(r => r.cat.cat))];
+  allCats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.filter = c;
+    btn.textContent = catLabels[c] || c;
+    filterBar.appendChild(btn);
+  });
+
+  // Event listener para filtros (inclui earnings grid)
+  filterBar.addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+
+    // Filtra news grid
+    newsGrid.querySelectorAll('.card').forEach(card =>
+      card.classList.toggle('hidden', f !== 'all' && card.dataset.category !== f)
+    );
+    // Filtra earnings grid
+    earningsGrid.querySelectorAll('.card').forEach(card =>
+      card.classList.toggle('hidden', f !== 'all' && card.dataset.category !== f)
+    );
+    // Mostra/oculta seção earnings
+    if (earningsRanked.length) {
+      earningsSec.style.display = (f === 'all' || f === 'resultados') ? 'block' : 'none';
+    }
+  });
+
+  // ── RESUMO DE MERCADO ──
+  document.getElementById('summary-body').innerHTML =
+    buildSummary(earningsRanked.map(r => r.item), otherRanked);
+
+  // ── ANIMAÇÃO ESCALONADA ──
+  document.querySelectorAll('.card.anim-ready').forEach((card, i) =>
+    setTimeout(() => { card.classList.add('anim-in'); card.classList.remove('anim-ready'); }, i * 55)
+  );
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   §12  BOOTSTRAP — botão → loading → fetch → render
+────────────────────────────────────────────────────────────── */
+async function loadNews() {
+  const btn = document.getElementById('btn-load');
+  btn.disabled = true;
+
+  document.getElementById('load-screen').style.display    = 'none';
+  document.getElementById('loading-state').style.display  = 'flex';
+  document.getElementById('live-label').textContent       = 'Buscando feeds RSS…';
+
+  const msgs = [
+    'Buscando feeds RSS…','Convertendo XML…',
+    'Aplicando detector de earnings…','Filtrando janela temporal…',
+    'Classificando notícias…','Quase pronto…',
+  ];
+  let mi = 0;
+  const loadTxt = document.getElementById('loading-text');
+  const msgInt  = setInterval(() => { loadTxt.textContent = msgs[++mi % msgs.length]; }, 650);
+
+  // Fetch paralelo de todos os feeds
+  const results = await Promise.allSettled(
+    FEEDS.map(async feed => {
+      const xml = await fetchWithFallback(feed.url);
+      if (!xml) throw new Error(feed.name);
+      return { items: parseXML(xml, feed.name), name: feed.name };
+    })
+  );
+
+  clearInterval(msgInt);
+
+  // Consolida e exibe status dos feeds
+  let allItems = [];
+  const feedMeta  = document.getElementById('feed-meta');
+  const errorArea = document.getElementById('error-area');
+  let failCount   = 0;
+
+  results.forEach((res, i) => {
+    const feed = FEEDS[i];
+    if (res.status === 'fulfilled') {
+      allItems = allItems.concat(res.value.items);
+      feedMeta.insertAdjacentHTML('beforeend',
+        `<span class="feed-meta-item"><span class="feed-dot"></span>${esc(feed.name)} (${res.value.items.length})</span>`);
+    } else {
+      failCount++;
+      feedMeta.insertAdjacentHTML('beforeend',
+        `<span class="feed-meta-item"><span class="feed-dot err"></span>${esc(feed.name)} (indisponível)</span>`);
+    }
+  });
+
+  if (failCount === FEEDS.length) {
+    errorArea.innerHTML = `<div class="error-banner">⚠ Todos os feeds RSS estão inacessíveis no momento. Verifique a conexão e tente novamente.</div>`;
+  }
+
+  // ── PIPELINE DE FILTROS ──
+  // 1. Filtro de janela dinâmica (§1)
+  const inWindow = allItems.filter(isInWindow);
+  // 2. Filtro de relevância (earnings passam automaticamente)
+  const relevant = inWindow.filter(isRelevant);
+  // 3. Deduplicação
+  const unique   = dedup(relevant);
+  // 4. Rank (earnings têm peso 7 — topo garantido)
+  const ranked   = rankItems(unique).slice(0, 12);
+
+  // Atualiza UI
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('news-content').style.display  = 'block';
+  document.getElementById('live-label').textContent      =
+    ranked.length ? `${ranked.length} notícias carregadas` : 'Nenhuma notícia nas últimas 24h';
+
+  renderAll(ranked);
+}
+
+document.getElementById('btn-load').addEventListener('click', loadNews);
+
+
+/* ──────────────────────────────────────────────────────────────
+   §13  TICKER
+────────────────────────────────────────────────────────────── */
+const TICKER_DATA = [
+  { l:'TIMS3',   v:'R$ 14,82', c:'+1,6%',          d:'up' },
+  { l:'VIVT3',   v:'R$ 53,10', c:'+0,8%',          d:'up' },
+  { l:'TOTS3',   v:'R$ 29,45', c:'-0,3%',          d:'dn' },
+  { l:'LWSA3',   v:'R$ 4,12',  c:'+2,1%',          d:'up' },
+  { l:'CIEL3',   v:'R$ 8,74',  c:'-0,4%',          d:'dn' },
+  { l:'SELIC',   v:'13,25%',   c:'meta atual',     d:'dn' },
+  { l:'USD/BRL', v:'R$ 5,72',  c:'+0,3%',          d:'dn' },
+  { l:'IBOV',    v:'129.840',  c:'-0,2%',          d:'dn' },
+  { l:'SKY MVNO',v:'go-live 06/abr', c:'novo player', d:'up' },
+  { l:'REDATA',  v:'R$ 5,2 bi',c:'2026',           d:'up' },
+];
+const tickerEl   = document.getElementById('ticker');
+const tickerHtml = TICKER_DATA.map(i =>
+  `<span class="ticker-item"><strong>${i.l}</strong> ${i.v} <span class="${i.d}">${i.c}</span></span>`
+).join('');
+tickerEl.innerHTML = tickerHtml + tickerHtml;
+</script>
+</body>
+</html>
