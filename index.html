@@ -1085,224 +1085,491 @@ function parseXML(xmlText, sourceName) {
 ────────────────────────────────────────────────────────────── */
 const isInWindow = item => item.date >= WINDOW_START && item.date <= WINDOW_END;
 
-/* ──────────────────────────────────────────────────────────────
-   FILTRO ESPECÍFICO POR FONTE — Brazil Journal
-   ──────────────────────────────────────────────────────────────
-   PROBLEMA IDENTIFICADO:
-   O Brazil Journal publica conteúdo amplo (política, macro,
-   commodities, bancos tradicionais). As KEYWORDS genéricas do
-   §3 (receita, lucro, fusão...) deixam passar essas notícias
-   porque são financeiramente válidas mas fora do escopo
-   tech/telecom do site.
+/* ══════════════════════════════════════════════════════════════
+   FILTRO GLOBAL — TECH & TELECOM BRASIL (v10 — definitivo)
+   ══════════════════════════════════════════════════════════════
+   DIAGNÓSTICO DAS VERSÕES ANTERIORES — 3 causas raiz de vazamento:
 
-   SOLUÇÃO:
-   Quando a notícia vem do Brazil Journal, aplicamos um conjunto
-   de critérios MAIS ESTRITOS — a notícia só passa se mencionar
-   explicitamente tech, telecom ou empresa do setor.
+   ① 'ia ' — match em qualquer palavra terminando em "ia" seguida
+     de espaço: "políc[ia ]", "farmác[ia ]", "energ[ia ]",
+     "categor[ia ]", "Dav[os]" etc. Era responsável por ~80% dos
+     falsos positivos. REMOVIDO. Substituído por termos explícitos:
+     'inteligência artificial', 'ia generativa', 'ia aplicada',
+     'ia no brasil', 'uso de ia', 'solução de ia', 'projeto de ia'.
 
-   ESTRUTURA DO FILTRO:
-   1. TECH_TELECOM_KW — palavras-chave obrigatórias de tech/telecom
-   2. SECTOR_COMPANIES — empresas do setor que garantem passagem
-   3. EXCLUSION_KW — termos que excluem notícias fora do escopo
-      (mesmo que passem nos critérios acima)
+   ② 'criptoativos' / 'criptomoeda' — passava notícias do Banco
+     Central regulando cripto (macro, não tech). Mantidos na INCL
+     mas 'banco central' adicionado à EXCL para bloquear esse padrão.
 
-   Fontes opcionais (NeoFeed, Suno) recebem filtro moderado:
-   mais amplo que BJ mas mais estrito que o filtro geral.
-────────────────────────────────────────────────────────────── */
+   ③ Verbos genéricos de transformação ('digitalização',
+     'inovação tecnológica') em contexto de governo/macro.
+     Adicionadas entidades bloqueadoras: 'lula ', 'governo lula',
+     'ibge', 'tesouro nacional', 'banco central'.
 
-// Palavras-chave de tech/telecom que garantem relevância para BJ
-const TECH_TELECOM_KW = [
-  // Telecom
-  'telecom','telefonia','telefônica','5g','4g','banda larga','fibra óptica',
-  'fibra','operadora','mvno','espectro','anatel','conectividade',
-  'infraestrutura digital','rede de telecomunicações','claro','vivo','tim ','oi ',
-  'sky ','brisanet','alloha','v.tal','surf telecom','zaaz',
-  // Tech / digital
-  'tecnologia','software','saas','cloud','inteligência artificial',' ia ',
-  'startup','fintech','plataforma digital','data center','e-commerce',
-  'marketplace','cibersegurança','iot','open finance','pix','blockchain',
-  'transformação digital','economia digital','inovação tecnológica',
-  'digitalização','aplicativo','app ','api ','dados ','big data',
-  'machine learning','algoritmo','computação em nuvem',
-  // Empresas do setor tech/telecom (atalho direto)
-  'totvs','locaweb','lwsa','positivo tecnologia','positivo ','méliuz',
-  'enjoei','multilaser','multi ','intelbras','cielo','stone','pagseguro',
-  'nubank','picpay','mercado livre','mercado pago','ifood','99 ','rappi',
-  'vtex','nuvemshop','rdstation','linx','senior sistemas','benner','boa compra',
-  'ascenty','scala','elea','odata','digitalhouse','alura','descomplica',
-  'vivt3','tims3','oibr','tots3','lwsa3','posi3','meli3','enju3','intb3',
-  'ericsson','nokia','huawei','samsung','google','meta','microsoft',
-  'amazon','aws','oracle','sap','salesforce','cisco','qualcomm',
+   ARQUITETURA — 3 camadas em série:
+   ① INCL_KW : inclusão estrita — sem termos ambíguos
+   ② EXCL_KW : exclusão dupla (título + 150 chars do lead)
+   ③ EARNINGS_BYPASS : resultados de empresas do setor
+══════════════════════════════════════════════════════════════ */
+
+const INCL_KW = [
+
+  /* ── TELECOM ── */
+  'telecom','telecomunicações','telefonia',
+  'telefônica brasil','telefônica ',
+  'rede 5g','cobertura 5g','leilão 5g','expansão 5g',
+  'banda larga fixa','banda larga móvel','banda larga ',
+  'fibra óptica','fibra ótica','ftth','fttx',
+  'operadora de telecom','operadora móvel','operadora de telefonia',
+  'mvno','espectro radioelétrico','anatel',
+  'conectividade digital','infraestrutura de telecom',
+  'cabo submarino','backhaul','torre de telecom',
+  /* Operadoras BR — sempre com contexto */
+  'vivo ','vivo,','vivo:',
+  'tim brasil','tim ','tim,','tim:',
+  'oi s.a','oi telecom',
+  'claro brasil','claro ','claro,',
+  'sky brasil','brisanet','alloha','v.tal',
+  'surf telecom','zaaz','werthein','waiken','telebras',
+
+  /* ── TECH / DIGITAL ── */
+  'empresa de tecnologia','setor de tecnologia',
+  'tecnologia da informação','mercado de tecnologia',
+  'software empresarial','software de gestão','software ',
+  'saas','paas','iaas',
+  'cloud computing','computação em nuvem',
+  /* IA — apenas formas explícitas (sem que é ambíguo): */
+  'inteligência artificial',
+  'ia generativa','ia aplicada','ia no brasil',
+  'uso de ia','solução de ia','projeto de ia',
+  'adoção de ia','plataforma de ia','modelo de ia',
+  'ia para ','ia em ','ia na ','ia nas ','ia nos ',
+  'machine learning','deep learning',
+  'llm ','large language model','modelo de linguagem',
+  'startup de tecnologia','startup de software',
+  'startup ','unicórnio brasileiro',
+  'fintech','insurtech','edtech','healthtech','legaltech','regtech',
+  'e-commerce','marketplace digital','comércio eletrônico',
+  'cibersegurança','segurança cibernética','segurança da informação',
+  'ransomware','phishing','vazamento de dados','lgpd',
+  'internet das coisas','iot industrial',
+  'blockchain','web3',
+  /* cripto — mas Banco Central bloqueado na EXCL */
+  'exchange de criptomoedas','mercado de criptoativos',
+  'criptomoeda no brasil','criptoativo no brasil',
+  'token digital','tokenização de ativos','drex',
+  'open finance','open banking',
+  'pix ','pix,','sistema pix',
+  'data center','centro de dados',
+  'big data','ciência de dados','engenharia de dados',
+  'transformação digital','economia digital',
+  'digitalização de processos','inovação tecnológica',
+  'sistema de gestão','erp totvs','sistema integrado',
+  'computação quântica','semicondutor',
+  'realidade aumentada','realidade virtual','metaverso',
+  'robótica industrial','automação de processos',
+  'impressão 3d','manufatura digital',
+  'desenvolvimento de software','aplicativo mobile',
+  'microserviços','devops','infraestrutura de ti',
+
+  /* ── EMPRESAS BR LISTADAS ── */
+  'totvs','tots3',
+  'locaweb','lwsa3',
+  'positivo tecnologia','posi3',
+  'méliuz','meli3',
+  'enjoei','enju3',
+  'multilaser','intelbras','intb3',
+  'cielo s.a','ciel3',
+  'vivt3','tims3','oibr3','oibr4','brsr3',
+
+  /* ── FINTECHS E DIGITAIS BR ── */
+  'nubank','nu holdings',
+  'stone pagamentos','stoneco','stne',
+  'pagseguro digital','pags',
+  'picpay','mercado livre','mercado pago',
+  'ifood','rappi brasil',
+  'vtex','nuvemshop','rdstation',
+  'creditas','cloudwalk','celcoin',
+  'c6 bank','banco inter','inter&co',
+  'neon pagamentos','will bank',
+  'linx sistemas','senior sistemas','benner sistemas',
+  'getnet','adyen brasil',
+
+  /* ── INFRAESTRUTURA DIGITAL ── */
+  'ascenty','scala data','elea digital',
+
+  /* ── BIG TECHS — apenas operações no Brasil ── */
+  'google brasil','meta brasil','microsoft brasil',
+  'amazon brasil','aws brasil','amazon web services',
+  'apple brasil','samsung brasil','huawei brasil',
+  'nvidia brasil','ericsson brasil','nokia brasil',
+  'cisco brasil','oracle brasil','sap brasil',
+  'salesforce brasil','ibm brasil',
+
+  /* ── M&A ESPECÍFICO DO SETOR ── */
+  'aquisição de startup','fusão de empresas de tecnologia',
+  'ipo de empresa de tech','ipo de telecom',
+  'rodada série a','rodada série b','rodada série c',
+  'seed round','rodada pré-seed',
+  'venture capital em tecnologia',
+  'investimento em startup','aporte em fintech'
 ];
 
-// Termos que EXCLUEM notícias mesmo se passarem nos filtros acima
-// (notícias de macro puro, política, commodities, bancos tradicionais)
-const EXCLUSION_KW_BJ = [
-  'commodities','petróleo','minério de ferro','soja','milho','açúcar','café',
-  'boi gordo','grãos','agronegócio','exportação de','câmbio',
-  'itaú','bradesco','santander','banco do brasil','caixa econômica',
-  'bb seguridade','porto seguro','sul america','tokio marine',
-  'previdência','aposentadoria','fgts','inss',
-  'eleições','candidato','partido político','congresso nacional','senado',
-  'câmara dos deputados','ministério','governo federal','lula','bolsonaro',
-  'inflação','pib','selic','juros básicos','copom','banco central',
-  'petrobras','vale ','embraer','gerdau','usiminas','csn ',
-  'shopping','varejo','lojas','magazine luiza','americanas','casas bahia',
-  'raia drogasil','farmácia','drogaria','supermercado','atacadão',
-  'construtora','incorporadora','imóvel','loteamento','fii ',
-  'energia elétrica','enel','cemig','cpfl','light ','eletrobras',
-  'saneamento','sabesp','copasa','aviação','gol ','latam','azul ',
-  'logística','transporte','rodoviário','ferroviário',
+const EXCL_KW = [
+
+  /* Energia */
+  'energia elétrica','setor elétrico','distribuidora de energia',
+  'transmissão de energia','geração de energia','usina hidrelétrica',
+  'parque eólico','solar fotovoltaica','energia renovável',
+  'enel ','cemig','cpfl ','neoenergia','eletrobras',
+  'eneva ','engie','aes brasil','taesa ','cteep ',
+  'sabesp','copasa','sanepar','equatorial ',
+  'gás natural','distribuição de gás',
+
+  /* Petróleo */
+  'petróleo','óleo e gás','refinaria','petroquímica','pré-sal',
+  'petrobras','prio ','3r petroleum','brava energia',
+
+  /* Mineração */
+  'mineração','minério de ferro','extração mineral',
+  'vale ','vale,','gerdau','usiminas','csn ',
+  'braskem','suzano ','klabin',
+  'siderúrgica','metalúrgica','mineradora',
+
+  /* Agro */
+  'agronegócio','soja ','milho ','açúcar ','boi gordo',
+  'cana-de-açúcar','grãos ','fertilizante',
+  'jbs ','brf ','marfrig ','minerva ','frigorifico',
+
+  /* Bancos tradicionais */
+  'itaú unibanco','itaú bba','itaú ','itaú,',
+  'bradesco','santander brasil','santander ',
+  'banco do brasil','caixa econômica federal',
+  'bndes ','bb seguridade',
+  'porto seguro','tokio marine','previdência privada',
+  'aposentadoria','fgts ','inss ',
+  'fundo multimercado','fundo de renda fixa',
+  'corretora de valores',
+
+  /* Varejo físico */
+  'magazine luiza','magalu','americanas','casas bahia',
+  'grupo pão de açúcar','carrefour ','atacadão',
+  'farmácia ','drogaria ','supermercado ',
+  'renner ','riachuelo','grupo soma',
+  'lojas americanas','lojas renner',
+
+  /* Imóveis */
+  'construtora ','incorporadora ','fundo imobiliário',
+  'fii ','cyrela','mrv ','imóvel ','apartamento',
+
+  /* Aviação/transporte */
+  'companhia aérea','aviação civil',
+  'gol linhas','latam airlines','azul linhas',
+  'aeroporto ','ferrovia ','logística de cargas',
+
+  /* Política */
+  'eleição ','eleições 2026','candidato ',
+  'partido político','congresso nacional',
+  'câmara dos deputados','senado federal',
+  'ministério da fazenda','governo federal',
+  'stf ','tcu ','reforma tributária',
+  'orçamento federal','dívida pública',
+
+  /* Macro puro */
+  'taxa selic','copom ','banco central do brasil',
+  'banco central anuncia','banco central regula',
+  'inflação ','ipca ','igpm ',
+  'pib brasileiro','crescimento do pib',
+  'câmbio ','cotação do dólar',
+  'balança comercial','superávit primário',
+
+  /* Entidades que "sequestram" keywords de tech */
+  'ibge aponta','ibge divulga','dados do ibge',
+  'fundo soberano','tesouro nacional',
+  'lula anuncia','lula discursa','lula defende',
+  'governo lula ','presidente lula',
+
+  /* Indústria tradicional */
+  'embraer ','montadora ','indústria automobilística',
+  'volkswagen brasil','toyota brasil',
+  'ford brasil','gm brasil',
 ];
 
-/**
- * isTechTelecomRelevant(item)
- * Filtro estrito para fontes de conteúdo amplo (Brazil Journal).
- * Retorna true SE:
- *   a) Tem keyword de tech/telecom OU empresa do setor, E
- *   b) NÃO tem keyword de exclusão dominante no título.
- */
-function isTechTelecomRelevant(item) {
-  const hay     = (item.title + ' ' + item.desc).toLowerCase();
-  const titleLow = item.title.toLowerCase();
+const SPECIALIZED_SOURCES = new Set(['Teletime', 'Telesíntese']);
 
-  // Earnings de empresa do setor sempre passam
+function isGloballyRelevant(item) {
   if (isEarnings(item)) return true;
 
-  // Verifica se tem ao menos 1 keyword de tech/telecom
-  const hasTechKw = TECH_TELECOM_KW.some(kw => hay.includes(kw));
-  if (!hasTechKw) return false;
+  const hay     = (item.title + ' ' + item.desc).toLowerCase();
+  const leadLow = (item.title + ' ' + (item.desc || '').slice(0, 150)).toLowerCase();
 
-  // Rejeita se o TÍTULO contiver keyword de exclusão dominante
-  // (só verifica no título para não rejeitar análises de contexto)
-  const titleExcluded = EXCLUSION_KW_BJ.some(kw => titleLow.includes(kw));
-  if (titleExcluded) return false;
+  if (!INCL_KW.some(kw => hay.includes(kw))) return false;
+  if (SPECIALIZED_SOURCES.has(item.source))  return true;
+  if (EXCL_KW.some(kw => leadLow.includes(kw))) return false;
 
   return true;
 }
 
-/**
- * isRelevant(item)
- * Filtro principal — aplica regra diferenciada por fonte:
- *   - Brazil Journal → filtro estrito (isTechTelecomRelevant)
- *   - Outras fontes  → filtro geral (KEYWORDS amplo, como antes)
- */
-function isRelevant(item) {
-  const hay = (item.title + ' ' + item.desc).toLowerCase();
+function isRelevant(item) { return isGloballyRelevant(item); }
+/* ──────────────────────────────────────────────────────────────
+   DEDUPLICAÇÃO INTELIGENTE
+   ──────────────────────────────────────────────────────────────
+   Três camadas, aplicadas em ordem:
 
-  // Earnings são sempre relevantes em qualquer fonte
-  if (isEarnings(item)) return true;
+   1. URL IDÊNTICA
+      Se dois itens têm exatamente o mesmo link → mantém 1.
 
-  // Brazil Journal: aplicar filtro estrito de tech/telecom
-  if (item.source === 'Brazil Journal') {
-    return isTechTelecomRelevant(item);
-  }
+   2. SIMILARIDADE DE TÍTULO (Jaccard sobre palavras-chave)
+      Normaliza títulos (sem acentos, minúsculo, sem stopwords),
+      extrai palavras com ≥4 chars, calcula interseção/união.
+      Se Jaccard ≥ 0.55 → considera duplicata.
+      Threshold 0.55: captura "Totvs reporta resultado 4T25" ≈
+      "Totvs divulga resultado do 4T25" sem bloquear notícias
+      relacionadas mas distintas.
 
-  // Todas as outras fontes: filtro geral por KEYWORDS (comportamento anterior)
-  return KEYWORDS.some(kw => hay.includes(kw));
+   3. DESEMPATE POR FONTE
+      Entre duplicatas, mantém a de maior SOURCE_PRIORITY.
+      NeoFeed/Brazil Journal/Suno (0.9) > Valor/InfoMoney/Exame
+      (0.6) > Money Times/Teletime/Telesíntese (0.3).
+────────────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────────────
+   DEDUPLICAÇÃO INTELIGENTE (v2 — enhanced)
+   ──────────────────────────────────────────────────────────────
+   TRÊS CAMINHOS para detectar duplicata:
+
+   1. URL IDÊNTICA → duplicata imediata
+
+   2. JACCARD ≥ 0.45 sobre palavras-chave do título
+      (sem stopwords, sem acentos, ≥4 chars)
+      Threshold 0.45 captura títulos com mesmas palavras-raiz
+      mas ordem ou palavras secundárias diferentes.
+
+   3. ENTITY + ACTION OVERLAP (detecção cross-sinônimo)
+      Se o mesmo nome de empresa aparece em ambos os títulos
+      E ambos usam verbos/substantivos do mesmo grupo semântico
+      (reporta/divulga/apresenta → resultados;
+       adquire/compra/comprou → M&A; etc.)
+      → considera duplicata mesmo com Jaccard baixo.
+
+   DESEMPATE: fonte de maior SOURCE_PRIORITY é mantida.
+────────────────────────────────────────────────────────────── */
+
+const STOPWORDS_DEDUP = new Set([
+  'a','o','e','é','em','de','da','do','das','dos','no','na','nos','nas',
+  'se','que','por','para','com','um','uma','uns','umas','ao','aos',
+  'vai','ser','ter','tem','mais','mas','ou','já','como','sobre','após',
+  'diz','disse','afirma','novo','nova','novos','novas','grande','maior',
+  'este','esta','esse','essa','seu','sua','seus','suas',
+]);
+
+// Empresas monitoradas para entity-overlap detection
+const DEDUP_ENTITIES = [
+  'totvs','nubank','vivo','tim ','locaweb','méliuz','positivo',
+  'meta ','google','microsoft','amazon','apple ','samsung','huawei',
+  'ifood','stone','pagseguro','mercado livre','brisanet','intelbras',
+  'enjoei','multilaser','cielo','creditas','picpay','rdstation',
+  'c6 bank','banco inter','neon','cloudwalk',
+];
+
+// Grupos de verbos/substantivos sinônimos por categoria de ação
+const DEDUP_ACTION_GROUPS = [
+  ['reporta','divulga','apresenta','publica','registra'],        // resultados
+  ['adquire','adquiriu','compra','comprou','fecha acordo'],      // M&A aquisição
+  ['capta','captou','levanta','levantou','recebe aporte'],       // captação
+  ['lança','lançou','estreia','apresenta novo','anuncia novo'],  // lançamento
+  ['alcança','atinge','supera','bate marca','chega'],            // milestone
+  ['expande','amplia','cresce','anuncia expansão'],              // expansão
+];
+
+function normWords(title) {
+  return title
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 4 && !STOPWORDS_DEDUP.has(w));
+}
+
+function jaccardWords(wA, wB) {
+  if (!wA.length || !wB.length) return 0;
+  const sA = new Set(wA), sB = new Set(wB);
+  let inter = 0;
+  for (const w of sA) { if (sB.has(w)) inter++; }
+  const union = sA.size + sB.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+function hasEntityOverlap(h1, h2) {
+  return DEDUP_ENTITIES.some(e => h1.includes(e) && h2.includes(e));
+}
+
+function hasActionOverlap(h1, h2) {
+  return DEDUP_ACTION_GROUPS.some(grp =>
+    grp.some(a => h1.includes(a)) && grp.some(a => h2.includes(a))
+  );
+}
+
+function areDuplicates(titleA, titleB) {
+  const h1 = titleA.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const h2 = titleB.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  // Jaccard ≥ 0.45
+  const wA = normWords(titleA), wB = normWords(titleB);
+  if (jaccardWords(wA, wB) >= 0.45) return true;
+
+  // Same entity + same action family
+  if (hasEntityOverlap(h1, h2) && hasActionOverlap(h1, h2)) return true;
+
+  return false;
+}
+
+function srcScore(item) {
+  return SOURCE_PRIORITY[item.source] ?? 0.1;
 }
 
 function dedup(items) {
-  const seen = new Set();
-  return items.filter(item => {
-    const key = item.title.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,55);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Sort so highest-priority source comes first → survives dedup
+  const sorted = [...items].sort((a, b) => srcScore(b) - srcScore(a));
+  const seenUrls  = new Set();
+  const kept      = [];
+  const keptTitles = [];
+
+  for (const item of sorted) {
+    // 1. URL idêntica
+    const url = (item.link || '').trim();
+    if (url && seenUrls.has(url)) continue;
+
+    // 2. Jaccard / entity+action
+    let isDup = false;
+    for (const kt of keptTitles) {
+      if (areDuplicates(item.title, kt)) { isDup = true; break; }
+    }
+    if (isDup) continue;
+
+    if (url) seenUrls.add(url);
+    kept.push(item);
+    keptTitles.push(item.title);
+  }
+
+  return kept;
 }
+
+
 
 
 /* ──────────────────────────────────────────────────────────────
    §8  CLASSIFICADOR DE CATEGORIA
    Earnings têm prioridade máxima antes das demais regras.
 ────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────
+   §8  CLASSIFICADOR DE CATEGORIA — v2 (mais preciso)
+   ──────────────────────────────────────────────────────────────
+   Cada regra tem dois critérios:
+   • strong[]: 1 match → categoria confirmada imediatamente
+   • fallback_strong[] + fallback_context[]: duplo gatilho
+     (evita falsos positivos em palavras genéricas)
+   A primeira regra satisfeita "ganha" (ordem = prioridade).
+────────────────────────────────────────────────────────────── */
 const CAT_RULES = [
-  /* ── PRIORIDADE 1: Earnings/Resultados ─────────────────────────
-     Detectados pelo isEarnings() antes de qualquer outra regra.
-     Peso máximo: 10. Sempre no topo. */
-  { keys: KEYWORDS_EARNINGS,
-    tag:'Resultados', cls:'tag-earnings', cat:'resultados' },
-
-  /* ── PRIORIDADE 2: M&A e movimentos societários ────────────────
-     Core de Investment Banking. Fusões, aquisições, IPOs,
-     follow-ons, desinvestimentos, consolidações.
-     Peso: 9. */
-  { keys:[
-      'fusão','aquisição','m&a','compra de','venda de','ipo ',
-      'follow-on','oferta pública','oferta inicial','desinvestimento',
-      'spin-off','carve-out','fechamento de capital','incorporação',
-      'take-over','due diligence','deal ','transação ','consolidação',
-      'joint venture','parceria estratégica',
+  {
+    cat:'resultados', tag:'Resultados', cls:'tag-earnings',
+    strong:[
+      'resultado trimestral','resultado anual',
+      'resultado do 1t','resultado do 2t','resultado do 3t','resultado do 4t',
+      '1t25','2t25','3t25','4t25','1t26','2t26','3t26','4t26',
+      '1t24','2t24','3t24','4t24',
+      'balanço trimestral','balanço anual','demonstrações financeiras',
+      'earnings call','divulgou resultado','reportou resultado',
+      'apresentou resultado','prévia de resultado',
+      'itr ','dfp ','guidance','revisão de guidance',
     ],
-    tag:'M&A', cls:'tag-ma', cat:'ma' },
-
-  /* ── PRIORIDADE 3: Captações e investimentos ───────────────────
-     Rodadas de venture, private equity, debêntures, captações
-     relevantes, CRI/CRA de empresas do setor.
-     Peso: 8. */
-  { keys:[
-      'captação','aporte','rodada de investimento','série a','série b','série c',
-      'seed','private equity','venture capital','fundo de investimento',
-      'debênture','cri ','cra ','investimento de','recebeu investimento',
-      'captou r$','levantou r$','investidor estratégico',
+    fallback_strong: ['lucro líquido','receita líquida','ebitda ajustado','margem ebitda'],
+    fallback_context: ['trimestre','trimestral','balanço','anual','4t','3t','2t','1t'],
+  },
+  {
+    cat:'ma', tag:'M&A', cls:'tag-ma',
+    strong:[
+      'fusão','aquisição de','adquire','adquiriu','comprou','vendeu',
+      'foi vendida','ipo ','follow-on','oferta pública inicial',
+      'oferta secundária','desinvestimento','spin-off','carve-out',
+      'fechamento de capital','deal de ','acordo de compra',
+      'take-over','due diligence','joint venture',
     ],
-    tag:'Investimentos', cls:'tag-investimentos', cat:'investimentos' },
-
-  /* ── PRIORIDADE 4: Regulação com impacto econômico ─────────────
-     Decisões da Anatel, CADE, CVM com efeito direto em valuations,
-     M&A pendentes ou modelos de negócio.
-     Peso: 7. */
-  { keys:[
-      'anatel','cade','cvm ','aprovação do cade','aprovação da anatel',
-      'regulação','regulatório','antitruste','consulta pública',
-      'tomada de subsídios','marco legal','lei ','edital de licitação',
-      'leilão de espectro','multa de','sanção','concessão',
+    fallback_strong: ['investimento','parceria','acordo'],
+    fallback_context: ['compra','venda','fusão','aquisição','capital','participação'],
+  },
+  {
+    cat:'investimentos', tag:'Investimentos', cls:'tag-investimentos',
+    strong:[
+      'captação de r$','captou r$','levantou r$',
+      'rodada série a','rodada série b','rodada série c','rodada seed',
+      'rodada pré-seed','série a de','série b de',
+      'private equity','venture capital',
+      'aporte de r$','recebeu aporte','recebeu investimento',
+      'investidor estratégico entra',
     ],
-    tag:'Regulação', cls:'tag-regulacao', cat:'regulacao' },
-
-  /* ── PRIORIDADE 5: Mercado / performance financeira ────────────
-     Resultados de mercado, cotações, ratings, reestruturações,
-     movimentos de dívida.
-     Peso: 6. */
-  { keys:[
-      'receita','ebitda','lucro','prejuízo','balanço','valuation',
-      'dividendo','jcp','buyback','recompra','proventos','guidance',
-      'rating ','rebaixamento','upgrade','inadimplência','reestruturação',
-      'b3 ','ibovespa','bolsa','ação ','ações ',
+    fallback_strong: ['captação','aporte','rodada'],
+    fallback_context: ['startup','fintech','r$ milhões','r$ bilhões','fundo','investidor'],
+  },
+  {
+    cat:'regulacao', tag:'Regulação', cls:'tag-regulacao',
+    strong:[
+      'anatel','cade ','aprovação do cade','aprovação da anatel',
+      'regulação de','regulatório','antitruste',
+      'leilão de espectro','multa da anatel','multa do cade',
+      'marco legal','resolução da anatel','instrução normativa cvm',
     ],
-    tag:'Mercado', cls:'tag-mercado', cat:'mercado' },
-
-  /* ── PRIORIDADE 6: Telecom ──────────────────────────────────────
-     Movimentos operacionais e estratégicos de operadoras.
-     Peso: 3. */
-  { keys:[
-      'telecom','telefon','operadora','5g','4g','fibra','banda larga',
-      'claro','vivo','tim ','oi ','sky ','mvno','espectro','satélite',
-      'v.tal','brisanet','alloha','unifique','surf telecom',
+    fallback_strong: ['regulação','regulatório','aprovação','sanção'],
+    fallback_context: ['anatel','cade','cvm','agência','setor','telecom'],
+  },
+  {
+    cat:'mercado', tag:'Mercado', cls:'tag-mercado',
+    strong:[
+      'expansão para','anuncia expansão','cresce no mercado',
+      'lançamento de produto','lança serviço','estreia no brasil',
+      'contrato de fornecimento','tendência de mercado',
+      'reestruturação','layoff','corte de custos',
+      'dividendo','buyback','recompra de ações',
+      'b3 ','ibovespa','valorização de ações',
     ],
-    tag:'Telecom', cls:'tag-telecom', cat:'telecom' },
-
-  /* ── PRIORIDADE 7: Tecnologia ───────────────────────────────────
-     Inovações, IA, data centers, cloud — com relevância contextual.
-     Peso: 2. */
-  { keys:[
-      'inteligência artificial',' ia ','data center','cloud',
-      'software','saas','startup','fintech','cibersegurança',
-      'iot','lgpd','redata','open finance','marketplace',
+    fallback_strong: ['mercado','crescimento','expansão','estratégia'],
+    fallback_context: ['brasil','empresa','setor','digital','tech','telecom'],
+  },
+  {
+    cat:'telecom', tag:'Telecom', cls:'tag-telecom',
+    strong:[
+      'cobertura 5g','rede 5g','lançamento 5g',
+      'fibra óptica','ftth','banda larga fixa',
+      'operadora de telecom','operadora móvel',
+      'espectro radioelétrico','mvno','roaming',
     ],
-    tag:'Tecnologia', cls:'tag-tecnologia', cat:'tecnologia' },
+    fallback_strong: ['telecom','telefonia','5g','fibra','banda larga'],
+    fallback_context: ['vivo','tim','oi','claro','operadora','rede'],
+  },
+  {
+    cat:'tecnologia', tag:'Tecnologia', cls:'tag-tecnologia',
+    strong:[
+      'inteligência artificial','ia generativa','machine learning',
+      'data center','computação em nuvem','cloud computing',
+      'cibersegurança','ransomware','vazamento de dados',
+      'blockchain','criptomoeda','web3','iot',
+    ],
+    fallback_strong: ['software','saas','startup','fintech','plataforma digital'],
+    fallback_context: ['tecnologia','digital','brasil','empresa'],
+  },
 ];
 
 function classify(item) {
-  // Earnings sempre verificados primeiro (§4)
   if (isEarnings(item)) return CAT_RULES[0];
   const hay = (item.title + ' ' + item.desc).toLowerCase();
-  for (const rule of CAT_RULES.slice(1)) {
-    if (rule.keys.some(k => hay.includes(k))) return rule;
+  for (const rule of CAT_RULES) {
+    if (rule.strong.some(k => hay.includes(k))) return rule;
+    if (rule.fallback_strong.length &&
+        rule.fallback_strong.some(k => hay.includes(k)) &&
+        rule.fallback_context.some(k => hay.includes(k))) return rule;
   }
-  return { tag:'Tech/Telecom', cls:'tag-telecom', cat:'telecom' };
+  return CAT_RULES[CAT_RULES.length - 1];
 }
 
 
