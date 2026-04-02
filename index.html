@@ -290,6 +290,155 @@ main{position:relative;z-index:5;max-width:1280px;margin:0 auto;padding:clamp(2r
 footer{position:relative;z-index:5;border-top:1px solid var(--border);padding:2rem clamp(1.5rem,5vw,4rem);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
 footer p{font-family:var(--mono);font-size:.62rem;color:var(--txt3);letter-spacing:.06em}
 .disclaimer{font-size:.56rem;opacity:.6}
+
+/* ═══════════════════════════════════════════
+   TAB NAVIGATION
+   Barra de abas que alterna entre "Notícias
+   do Dia" e "Resumo Semanal". Fica logo abaixo
+   do ticker, antes do conteúdo principal.
+═══════════════════════════════════════════ */
+.tab-nav{
+  position:relative;z-index:8;
+  display:flex;gap:0;
+  border-bottom:1px solid var(--border);
+  background:rgba(11,14,20,.95);
+  backdrop-filter:blur(8px);
+  padding:0 clamp(1.5rem,5vw,4rem);
+}
+.tab-btn{
+  font-family:var(--mono);font-size:.7rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--txt3);background:transparent;border:none;
+  padding:1rem 1.5rem;cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;
+  white-space:nowrap;
+}
+.tab-btn:hover{color:var(--txt2);}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
+.tab-btn.tab-weekly.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* Painéis de conteúdo de cada aba */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ═══════════════════════════════════════════
+   WEEKLY SUMMARY — estilos da aba semanal
+═══════════════════════════════════════════ */
+
+/* Cabeçalho informativo da semana */
+.weekly-header{
+  border:1px solid rgba(244,185,66,.25);
+  background:linear-gradient(135deg,rgba(244,185,66,.04),transparent 60%);
+  padding:1.75rem 2.25rem;margin-bottom:2.5rem;
+  position:relative;overflow:hidden;
+}
+.weekly-header::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),rgba(244,185,66,.3),transparent);
+}
+.weekly-header-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.weekly-title{font-family:var(--serif);font-size:clamp(1rem,2vw,1.2rem);font-weight:400;letter-spacing:-.01em;}
+.weekly-range{
+  font-family:var(--mono);font-size:.65rem;color:var(--gold);
+  letter-spacing:.1em;text-transform:uppercase;
+  background:rgba(244,185,66,.08);border:1px solid rgba(244,185,66,.2);
+  padding:.3rem .8rem;border-radius:2px;
+}
+
+/* Botão de gerar resumo semanal */
+.btn-weekly{
+  display:inline-flex;align-items:center;gap:.65rem;
+  font-family:var(--mono);font-size:.75rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:#0b0e14;background:var(--gold);border:none;
+  padding:.85rem 2rem;cursor:pointer;border-radius:2px;
+  transition:opacity .2s,transform .2s,box-shadow .2s;
+  box-shadow:0 0 24px rgba(244,185,66,.3);
+}
+.btn-weekly:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 4px 32px rgba(244,185,66,.45);}
+.btn-weekly:active{transform:translateY(0);}
+.btn-weekly:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+
+/* Loading semanal */
+#weekly-loading{display:none;flex-direction:column;align-items:center;padding:4rem 2rem;gap:1.25rem;}
+.loading-bar-weekly{width:260px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.loading-bar-w{
+  height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));
+  border-radius:2px;animation:loading-sweep 1.1s ease-in-out infinite;transform-origin:left;
+}
+
+/* Tela inicial da aba semanal */
+#weekly-load-screen{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:5rem 2rem;text-align:center;gap:1.5rem;
+}
+
+/* Container das notícias semanais */
+#weekly-content{display:none;}
+
+/* Card de notícia semanal */
+.weekly-card{
+  border:1px solid var(--border);
+  background:var(--bg-card);
+  padding:1.75rem 2rem;
+  margin-bottom:1.5px;      /* gap de 1.5px entre cards, igual ao site */
+  position:relative;overflow:hidden;
+  transition:border-color .25s,background .25s,transform .2s;
+}
+.weekly-card:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.02);transform:translateY(-1px);}
+.weekly-card::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:3px;
+  background:var(--gold);opacity:.5;
+}
+
+/* Header do card semanal */
+.wcard-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap;}
+.wcard-num{
+  font-family:var(--mono);font-size:.6rem;font-weight:500;
+  color:var(--gold);letter-spacing:.1em;
+  background:rgba(244,185,66,.1);border:1px solid rgba(244,185,66,.2);
+  padding:.18rem .5rem;border-radius:2px;
+}
+.wcard-sector{
+  font-family:var(--mono);font-size:.58rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  padding:.18rem .5rem;border-radius:2px;
+}
+.sector-tech   {background:rgba(255,123,58,.12);color:var(--orange);border:1px solid rgba(255,123,58,.25);}
+.sector-telecom{background:rgba(155,127,255,.12);color:var(--purple);border:1px solid rgba(155,127,255,.25);}
+.sector-ma     {background:rgba(0,200,160,.12);color:var(--green);border:1px solid rgba(0,200,160,.25);}
+.sector-earn   {background:rgba(244,185,66,.12);color:var(--gold);border:1px solid rgba(244,185,66,.25);}
+.wcard-date{font-family:var(--mono);font-size:.58rem;color:var(--txt3);margin-left:auto;}
+
+/* Título e corpo do card semanal */
+.wcard-title{
+  font-family:var(--serif);font-size:clamp(1rem,2vw,1.2rem);
+  font-weight:400;color:var(--txt);line-height:1.3;margin-bottom:.75rem;letter-spacing:-.01em;
+}
+.wcard-body{font-size:.85rem;font-weight:300;color:var(--txt2);line-height:1.7;}
+.wcard-body strong{color:var(--txt);font-weight:500;}
+
+/* Rodapé do card semanal com link */
+.wcard-footer{margin-top:1rem;padding-top:.85rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.5rem;}
+.wcard-footer-label{font-family:var(--mono);font-size:.56rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;}
+.wcard-source-link{
+  font-family:var(--mono);font-size:.6rem;color:var(--txt3);
+  text-decoration:none;border-bottom:1px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+.wcard-source-link:hover{color:var(--gold);border-bottom-color:rgba(244,185,66,.4);}
+
+/* Mensagem de vazio */
+.weekly-empty{
+  text-align:center;padding:4rem 2rem;
+  font-family:var(--mono);font-size:.75rem;color:var(--txt3);
+  letter-spacing:.1em;text-transform:uppercase;line-height:2;
+}
+.weekly-empty span{display:block;font-size:2rem;opacity:.2;margin-bottom:1rem;}
+
+/* Feed status bar dentro da aba semanal */
+.weekly-feed-bar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.75rem;font-family:var(--mono);font-size:.6rem;color:var(--txt3);letter-spacing:.06em;}
   </style>
 </head>
 <body>
@@ -314,8 +463,26 @@ footer p{font-family:var(--mono);font-size:.62rem;color:var(--txt3);letter-spaci
   <div class="ticker-scroll" id="ticker"></div>
 </div>
 
+<!-- ══════════════════ TAB NAVIGATION ════════════════════════════
+     Barra de abas que alterna entre os dois painéis principais.
+     JavaScript gerencia a classe .active para mostrar/ocultar.
+════════════════════════════════════════════════════════════════ -->
+<nav class="tab-nav" role="tablist" aria-label="Navegação principal">
+  <button class="tab-btn active"        id="tab-daily"  role="tab" aria-selected="true"  aria-controls="panel-daily">
+    📰 Notícias do Dia
+  </button>
+  <button class="tab-btn tab-weekly"    id="tab-weekly" role="tab" aria-selected="false" aria-controls="panel-weekly">
+    📅 Resumo Semanal
+  </button>
+</nav>
+
 <!-- ══════════════════ MAIN ════════════════════════════════════ -->
 <main>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAINEL 1 — NOTÍCIAS DO DIA (conteúdo original — inalterado)
+══════════════════════════════════════════════════════════════ -->
+<div id="panel-daily" class="tab-panel active" role="tabpanel" aria-labelledby="tab-daily">
 
   <!-- MARKET SUMMARY — sempre visível -->
   <section class="market-summary">
@@ -391,7 +558,56 @@ footer p{font-family:var(--mono);font-size:.62rem;color:var(--txt3);letter-spaci
       </div>
       <div class="news-grid" id="news-grid"></div>
     </section>
+  </div><!-- /news-content -->
+
+</div><!-- /panel-daily ═══════════════════════════════════════════ -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAINEL 2 — RESUMO SEMANAL (nova funcionalidade)
+     Toda a lógica está em §14 no JavaScript abaixo.
+══════════════════════════════════════════════════════════════ -->
+<div id="panel-weekly" class="tab-panel" role="tabpanel" aria-labelledby="tab-weekly">
+
+  <!-- Cabeçalho informativo com intervalo da semana atual -->
+  <div class="weekly-header">
+    <div class="weekly-header-inner">
+      <h2 class="weekly-title">Resumo Semanal — Tech &amp; Telecom Brasil</h2>
+      <span class="weekly-range" id="weekly-range">—</span>
+    </div>
+    <p style="font-size:.85rem;color:var(--txt2);margin-top:.75rem;font-weight:300;">
+      As <strong style="color:var(--txt)">10 principais notícias</strong> de tech e telecom
+      da semana corrente (segunda-feira até hoje), rankeadas por relevância estratégica.
+    </p>
   </div>
+
+  <!-- Tela inicial — antes do clique no botão -->
+  <div id="weekly-load-screen">
+    <div class="load-icon">📅</div>
+    <p class="load-hint">Clique para buscar e rankear as notícias da semana</p>
+    <button class="btn-weekly" id="btn-weekly">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2 7h10M7 2l5 5-5 5" stroke="#0b0e14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Gerar resumo da semana
+    </button>
+  </div>
+
+  <!-- Loading semanal -->
+  <div id="weekly-loading">
+    <div class="loading-bar-weekly"><div class="loading-bar-w"></div></div>
+    <p class="loading-text" id="weekly-loading-text">Buscando notícias da semana…</p>
+  </div>
+
+  <!-- Resultado do resumo semanal -->
+  <div id="weekly-content">
+    <div class="weekly-feed-bar" id="weekly-feed-meta"></div>
+    <div id="weekly-error"></div>
+    <div id="weekly-cards"></div>
+  </div>
+
+</div><!-- /panel-weekly ══════════════════════════════════════════ -->
+
 
 </main>
 
@@ -475,16 +691,45 @@ const CORS_PROXIES = [
    Garante foco em tech, telecom e mercado financeiro.
 ────────────────────────────────────────────────────────────── */
 const KEYWORDS = [
+  // ── Telecom / infraestrutura ────────────────────────────────
   'telecom','telefon','fibra','banda larga','5g','4g','anatel','operadora',
   'claro','vivo','tim ','oi ','v.tal','mvno','espectro','satélite','sky ',
-  'zaaz','brisanet','desktop ','alloha','intelbras','unifique',
+  'zaaz','brisanet','desktop ','alloha','intelbras','unifique','surf telecom',
+  'waiken','werthein','telebras',
+
+  // ── Tech / digital ──────────────────────────────────────────
   'tecnologia','inteligência artificial',' ia ','data center','cloud',
   'software','saas','startup','fintech','cibersegurança','lgpd','iot','redata',
-  'fusão','aquisição','m&a','ipo','captação','investimento','valuation',
-  'private equity','venture','regulação','regulatório','receita','ebitda',
-  'lucro','resultado','balanço','b3','bolsa','mercado','dividendo',
-  'totvs','locaweb','lwsa','positivo','méliuz','enjoei','multilaser',
-  'ericsson','nokia','huawei','google','meta','microsoft','amazon',
+  'plataforma digital','marketplace','e-commerce','open finance','pix',
+
+  // ── M&A e movimentos corporativos (IB core) ─────────────────
+  'fusão','aquisição','m&a','compra de','venda de','ipo','captação',
+  'follow-on','oferta pública','desinvestimento','spin-off','carve-out',
+  'due diligence','deal','transação','parceria estratégica','joint venture',
+  'consolidação','incorporação','fechamento de capital',
+
+  // ── Mercado de capitais / finanças (IB core) ─────────────────
+  'investimento','valuation','private equity','venture capital','venture',
+  'fundo de investimento','série a','série b','série c',
+  'seed','rodada','aporte','captação de recursos','debênture','cri','cra',
+  'rating','rebaixamento','upgrade de rating','inadimplência','reestruturação',
+  'cvm','b3 ','bolsa de valores','ibovespa','selic','copom','ipca',
+  'receita','ebitda','lucro','prejuízo','balanço','resultado','dividendo',
+  'jcp','recompra de ações','buyback','proventos','guidance',
+
+  // ── Regulação com impacto econômico ─────────────────────────
+  'regulação','regulatório','cade','antitruste','aprovação regulatória',
+  'multa','sanção','licença','concessão','leilão de espectro',
+
+  // ── Empresas listadas monitoradas ───────────────────────────
+  'totvs','tots3','locaweb','lwsa3','positivo','posi3','méliuz','meli3',
+  'enjoei','enju3','multilaser','cielo','ciel3','stone','pagseguro',
+  'vivt3','tims3','oibr','brsr3','intelbras','intb3',
+  'desktop','dtcy3','alloha','unifique',
+
+  // ── Big techs com operações relevantes no Brasil ─────────────
+  'ericsson','nokia','huawei','samsung','google','meta','microsoft',
+  'amazon','aws','oracle','sap','salesforce',
 ];
 
 
@@ -507,32 +752,70 @@ const KEYWORDS = [
 
 // Palavras que indicam divulgação/cobertura de resultados financeiros
 const KEYWORDS_EARNINGS = [
+  // Divulgação explícita
   'resultado','resultados','balanço','balanço trimestral','balanço anual',
-  '1t26','2t26','3t26','4t26','1t25','2t25','3t25','4t25',
-  'itr','dfp','demonstrações financeiras','earnings','earning',
-  'receita líquida','receita bruta','ebitda','ebit','lucro líquido',
-  'lucro bruto','prejuízo','margem ebitda','margem líquida',
-  'guidance','projeção de resultado','prévia de resultado',
   'divulgou resultado','apresentou resultado','reportou resultado',
   'temporada de resultado','balanço financeiro','resultado financeiro',
-  'lucro por ação','lpa','receita total','crescimento de receita',
-  'resultado operacional','fluxo de caixa','geração de caixa',
+  'prévia de resultado','prévia operacional',
+
+  // Períodos (expandido até 4T27 para futuro)
+  '1t26','2t26','3t26','4t26','1t25','2t25','3t25','4t25',
+  '1t27','2t27','3t27','4t27','1t24','2t24','3t24','4t24',
+  '4t23','3t23','exercício 2025','exercício 2026','ano fiscal',
+
+  // Documentos CVM
+  'itr','dfp','demonstrações financeiras','fato relevante','comunicado ao mercado',
+  'earnings','earning call','conference call','resultado anual',
+
+  // Métricas financeiras em contexto de resultado
+  'receita líquida','receita bruta','receita total','crescimento de receita',
+  'ebitda','ebitda ajustado','ebit','margem ebitda','margem líquida',
+  'lucro líquido','lucro bruto','lucro operacional','resultado operacional',
+  'prejuízo líquido','prejuízo operacional',
+  'fluxo de caixa','geração de caixa','free cash flow','fcf',
+  'lucro por ação','lpa','eps',
+
+  // Guidance e projeções
+  'guidance','projeção de resultado','revisão de guidance','atualização de guidance',
+  'outlook','perspectivas financeiras','meta financeira',
+
+  // Consenso de analistas
+  'acima do consenso','abaixo do consenso','supera estimativa','abaixo das estimativas',
+  'bate consenso','decepciona','surpresa positiva','surpresa negativa',
 ];
 
-// Empresas brasileiras de tech/telecom monitoradas para earnings
+// Empresas brasileiras de tech/telecom/fintech monitoradas para earnings
 const EARNINGS_COMPANIES = [
+  // Telecom listadas
   'telefônica','vivo','vivt','tim brasil','tims','oi ',
+  // Tech listadas
   'totvs','tots','locaweb','lwsa','positivo tecnologia','positivo ',
-  'méliuz','meli3','enjoei','multi ','multilaser','brisanet','brsr',
-  'desktop','intelbras','alloha','unifique','desktop ',
-  'cielo','ciel','getnet','stone','pagseguro',
+  'méliuz','meli3','enjoei','multi ','multilaser',
+  'intelbras','intb','desktop ',
+  // ISPs / infraestrutura listados
+  'brisanet','brsr','alloha','unifique',
+  // Fintechs / pagamentos listados
+  'cielo','ciel','getnet','stone','pagseguro','pag ',
+  'nubank','nu ','inter ','banco inter','c6 bank',
+  'picpay','mercado pago','boa compra',
+  // Data centers / cloud listados ou relevantes
+  'ascenty','scala','elea','odata',
+  // Players de IB ativos em M&A de tech
+  'btg pactual','btg ','itaú bba','bradesco bbi','xp investimentos','xp inc',
 ];
 
-// Tickers B3 como alternativa de detecção
+// Tickers B3 e internacionais como alternativa de detecção
 const EARNINGS_TICKERS = [
+  // Telecom
   'vivt3','tims3','oibr3','oibr4',
-  'tots3','lwsa3','posi3','meli3','enju3',
-  'ciel3','stne','pags',
+  // Tech
+  'tots3','lwsa3','posi3','meli3','enju3','intb3','dtcy3',
+  // ISPs
+  'brsr3','brsr6',
+  // Fintechs / pagamentos
+  'ciel3','stne','pags','boas3',
+  // Bancos digitais relevantes para o setor
+  'nu ','nubr33',
 ];
 
 /**
@@ -702,25 +985,84 @@ function dedup(items) {
    Earnings têm prioridade máxima antes das demais regras.
 ────────────────────────────────────────────────────────────── */
 const CAT_RULES = [
-  // Earnings sempre identificados primeiro
-  { keys:KEYWORDS_EARNINGS,
+  /* ── PRIORIDADE 1: Earnings/Resultados ─────────────────────────
+     Detectados pelo isEarnings() antes de qualquer outra regra.
+     Peso máximo: 10. Sempre no topo. */
+  { keys: KEYWORDS_EARNINGS,
     tag:'Resultados', cls:'tag-earnings', cat:'resultados' },
-  { keys:['fusão','aquisição','m&a','compra','venda','ipo','captação','deal','consolidação'],
-    tag:'M&A',           cls:'tag-ma',           cat:'ma' },
-  { keys:['anatel','regulação','regulatório','lei ','edital','cade','consulta pública','tomada de subsídios','marco legal'],
-    tag:'Regulação',     cls:'tag-regulacao',    cat:'regulacao' },
-  { keys:['investimento','aporte','private equity','venture','fundo','redata','incentivo fiscal'],
+
+  /* ── PRIORIDADE 2: M&A e movimentos societários ────────────────
+     Core de Investment Banking. Fusões, aquisições, IPOs,
+     follow-ons, desinvestimentos, consolidações.
+     Peso: 9. */
+  { keys:[
+      'fusão','aquisição','m&a','compra de','venda de','ipo ',
+      'follow-on','oferta pública','oferta inicial','desinvestimento',
+      'spin-off','carve-out','fechamento de capital','incorporação',
+      'take-over','due diligence','deal ','transação ','consolidação',
+      'joint venture','parceria estratégica',
+    ],
+    tag:'M&A', cls:'tag-ma', cat:'ma' },
+
+  /* ── PRIORIDADE 3: Captações e investimentos ───────────────────
+     Rodadas de venture, private equity, debêntures, captações
+     relevantes, CRI/CRA de empresas do setor.
+     Peso: 8. */
+  { keys:[
+      'captação','aporte','rodada de investimento','série a','série b','série c',
+      'seed','private equity','venture capital','fundo de investimento',
+      'debênture','cri ','cra ','investimento de','recebeu investimento',
+      'captou r$','levantou r$','investidor estratégico',
+    ],
     tag:'Investimentos', cls:'tag-investimentos', cat:'investimentos' },
-  { keys:['receita','ebitda','lucro','balanço','valuation','dividendo','ação','bolsa'],
-    tag:'Mercado',       cls:'tag-mercado',       cat:'mercado' },
-  { keys:['telecom','telefon','operadora','5g','4g','fibra','banda larga','claro','vivo','tim ','oi ','sky ','mvno','espectro','satélite'],
-    tag:'Telecom',       cls:'tag-telecom',       cat:'telecom' },
-  { keys:['inteligência artificial',' ia ','data center','cloud','software','saas','startup','iot','cibersegurança'],
-    tag:'Tecnologia',    cls:'tag-tecnologia',    cat:'tecnologia' },
+
+  /* ── PRIORIDADE 4: Regulação com impacto econômico ─────────────
+     Decisões da Anatel, CADE, CVM com efeito direto em valuations,
+     M&A pendentes ou modelos de negócio.
+     Peso: 7. */
+  { keys:[
+      'anatel','cade','cvm ','aprovação do cade','aprovação da anatel',
+      'regulação','regulatório','antitruste','consulta pública',
+      'tomada de subsídios','marco legal','lei ','edital de licitação',
+      'leilão de espectro','multa de','sanção','concessão',
+    ],
+    tag:'Regulação', cls:'tag-regulacao', cat:'regulacao' },
+
+  /* ── PRIORIDADE 5: Mercado / performance financeira ────────────
+     Resultados de mercado, cotações, ratings, reestruturações,
+     movimentos de dívida.
+     Peso: 6. */
+  { keys:[
+      'receita','ebitda','lucro','prejuízo','balanço','valuation',
+      'dividendo','jcp','buyback','recompra','proventos','guidance',
+      'rating ','rebaixamento','upgrade','inadimplência','reestruturação',
+      'b3 ','ibovespa','bolsa','ação ','ações ',
+    ],
+    tag:'Mercado', cls:'tag-mercado', cat:'mercado' },
+
+  /* ── PRIORIDADE 6: Telecom ──────────────────────────────────────
+     Movimentos operacionais e estratégicos de operadoras.
+     Peso: 3. */
+  { keys:[
+      'telecom','telefon','operadora','5g','4g','fibra','banda larga',
+      'claro','vivo','tim ','oi ','sky ','mvno','espectro','satélite',
+      'v.tal','brisanet','alloha','unifique','surf telecom',
+    ],
+    tag:'Telecom', cls:'tag-telecom', cat:'telecom' },
+
+  /* ── PRIORIDADE 7: Tecnologia ───────────────────────────────────
+     Inovações, IA, data centers, cloud — com relevância contextual.
+     Peso: 2. */
+  { keys:[
+      'inteligência artificial',' ia ','data center','cloud',
+      'software','saas','startup','fintech','cibersegurança',
+      'iot','lgpd','redata','open finance','marketplace',
+    ],
+    tag:'Tecnologia', cls:'tag-tecnologia', cat:'tecnologia' },
 ];
 
 function classify(item) {
-  // Verifica earnings primeiro (antes das regras genéricas)
+  // Earnings sempre verificados primeiro (§4)
   if (isEarnings(item)) return CAT_RULES[0];
   const hay = (item.title + ' ' + item.desc).toLowerCase();
   for (const rule of CAT_RULES.slice(1)) {
@@ -734,7 +1076,31 @@ function classify(item) {
    §9  RANKER
    Earnings têm peso máximo (7) — sempre no topo.
 ────────────────────────────────────────────────────────────── */
-const CAT_WEIGHT = { resultados:7, ma:6, regulacao:5, investimentos:4, mercado:3, telecom:2, tecnologia:1 };
+/* ──────────────────────────────────────────────────────────────
+   §9  RANKER — VIÉS DE INVESTMENT BANKING
+   ──────────────────────────────────────────────────────────────
+   Pesos revisados para refletir prioridade IB:
+     resultados   10  → earnings sempre no topo (impacto imediato em preço)
+     ma            9  → fusões/aquisições/IPOs: core de IB
+     investimentos 8  → captações, rodadas, PE/VC: relevante para deal flow
+     regulacao     7  → decisões regulatórias com impacto em M&A e valuations
+     mercado       6  → performance financeira, ratings, dividendos
+     telecom       3  → movimentos operacionais (relevante mas não financeiro puro)
+     tecnologia    2  → inovação/tendências (contexto, não impacto imediato)
+
+   Resultado prático: uma notícia de IPO ou aquisição sempre
+   aparece acima de uma notícia de lançamento de produto 5G,
+   mesmo que a segunda seja mais recente.
+────────────────────────────────────────────────────────────── */
+const CAT_WEIGHT = {
+  resultados:   10,   // earnings — maior impacto em preço e valuation
+  ma:            9,   // M&A, IPO, follow-on, consolidação
+  investimentos: 8,   // captações, rodadas, PE/VC, debêntures
+  regulacao:     7,   // decisões regulatórias com efeito econômico
+  mercado:       6,   // resultados de mercado, rating, reestruturação
+  telecom:       3,   // operacional telecom
+  tecnologia:    2,   // inovação / tendências tech
+};
 
 function rankItems(items) {
   return items
@@ -1044,6 +1410,296 @@ const tickerHtml = TICKER_DATA.map(i =>
   `<span class="ticker-item"><strong>${i.l}</strong> ${i.v} <span class="${i.d}">${i.c}</span></span>`
 ).join('');
 tickerEl.innerHTML = tickerHtml + tickerHtml;
+
+
+/* ══════════════════════════════════════════════════════════════
+   §14  SISTEMA DE ABAS + RESUMO SEMANAL
+   ──────────────────────────────────────────────────────────────
+   ARQUITETURA DA NOVA FUNCIONALIDADE:
+
+   A. TROCA DE ABAS
+      Dois botões (#tab-daily / #tab-weekly) alternam a classe
+      .active entre os painéis #panel-daily e #panel-weekly.
+      O painel diário e toda sua lógica permanecem 100% intactos.
+
+   B. CÁLCULO DA JANELA SEMANAL (dinâmico, nunca hardcoded)
+      - Pega a data atual com new Date()
+      - Calcula a segunda-feira da semana corrente:
+          offset = (diaSemana === 0 ? 6 : diaSemana - 1)
+          onde diaSemana: 0=dom, 1=seg … 6=sab
+      - WINDOW_WEEK_START = segunda-feira às 00:00:00
+      - WINDOW_WEEK_END   = hoje às 23:59:59
+      - Funciona para qualquer dia da semana, qualquer data futura.
+
+   C. PIPELINE DE DADOS SEMANAL
+      1. Reutiliza FEEDS, CORS_PROXIES, fetchWithFallback e parseXML
+         do código existente (zero duplicação)
+      2. Filtra itens pela janela semanal (isInWeekWindow)
+      3. Aplica filtro de relevância e deduplicação (idênticos §6/§7)
+      4. Classifica setor (TECH / TELECOM / M&A / Earnings)
+      5. Rankeia por peso editorial
+      6. Seleciona top 10
+      7. Renderiza cards com formato padronizado
+
+   D. REUTILIZAÇÃO TOTAL DO CÓDIGO EXISTENTE
+      - FEEDS, CORS_PROXIES, fetchWithFallback, parseXML → §2, §5
+      - KEYWORDS, isRelevant, dedup → §3, §7
+      - classify, CAT_WEIGHT → §8, §9
+      Nenhuma função nova que já exista foi duplicada.
+══════════════════════════════════════════════════════════════ */
+
+
+/* ──────────────────────────────────────────────────────────────
+   A. TROCA DE ABAS
+   Detecta clique em qualquer .tab-btn e alterna active
+   entre botões e painéis correspondentes.
+────────────────────────────────────────────────────────────── */
+(function initTabs() {
+  const tabBtns   = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active de todos
+      tabBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      tabPanels.forEach(p => p.classList.remove('active'));
+
+      // Ativa o clicado
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      const target = document.getElementById(btn.getAttribute('aria-controls'));
+      if (target) target.classList.add('active');
+    });
+  });
+})();
+
+
+/* ──────────────────────────────────────────────────────────────
+   B. CÁLCULO DA JANELA SEMANAL
+   Determina segunda-feira da semana corrente e hoje.
+   Ambos os limites são recalculados a cada clique no botão,
+   garantindo que a janela avance automaticamente a cada dia.
+────────────────────────────────────────────────────────────── */
+function getWeekWindow() {
+  const now   = new Date();
+
+  // Hoje: fim do dia (23:59:59.999) no fuso local
+  const end   = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  // Segunda-feira: recua (diaDaSemana - 1) dias; domingo recua 6
+  // getDay(): 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
+  const dayOfWeek = now.getDay();
+  const offsetToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  const start = new Date(now);
+  start.setDate(now.getDate() - offsetToMonday);
+  start.setHours(0, 0, 0, 0); // início do dia
+
+  return { start, end, offsetDays: offsetToMonday };
+}
+
+/** Verifica se item está dentro da janela semanal */
+function isInWeekWindow(item, start, end) {
+  return item.date >= start && item.date <= end;
+}
+
+/** Atualiza o badge de período no cabeçalho da aba */
+function updateWeeklyRangeBadge() {
+  const { start, end } = getWeekWindow();
+  const m = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const fmt = d => `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]}`;
+  document.getElementById('weekly-range').textContent =
+    `${fmt(start)} – ${fmt(end)} ${end.getFullYear()}`;
+}
+// Atualiza imediatamente ao carregar
+updateWeeklyRangeBadge();
+
+
+/* ──────────────────────────────────────────────────────────────
+   C. CLASSIFICADOR DE SETOR SIMPLIFICADO PARA O CARD SEMANAL
+   Retorna objeto com label e classe CSS para o badge de setor.
+   Usa a mesma lógica de classify() do §8, mas simplificada
+   para a exibição visual compacta dos cards semanais.
+────────────────────────────────────────────────────────────── */
+function weeklyClassifySector(item) {
+  const hay = (item.title + ' ' + item.desc).toLowerCase();
+
+  // Earnings: prioridade máxima
+  if (isEarnings(item))
+    return { label:'Earnings', cls:'sector-earn' };
+
+  // M&A (peso 9)
+  if (['fusão','aquisição','m&a','compra de','venda de','ipo ','follow-on',
+       'oferta pública','desinvestimento','spin-off','deal ','joint venture',
+       'parceria estratégica','consolidação','fechamento de capital'].some(k => hay.includes(k)))
+    return { label:'M&A', cls:'sector-ma' };
+
+  // Investimentos / captações (peso 8)
+  if (['captação','aporte','rodada','série a','série b','série c','seed ',
+       'private equity','venture capital','debênture','cri ','cra '].some(k => hay.includes(k)))
+    return { label:'Captação', cls:'sector-ma' };   // visual: verde (mesmo peso de M&A)
+
+  // Regulação com impacto econômico (peso 7)
+  if (['anatel','cade','cvm ','aprovação','regulação','regulatório',
+       'antitruste','leilão de espectro','multa de','concessão'].some(k => hay.includes(k)))
+    return { label:'Regulação', cls:'sector-telecom' };
+
+  // Telecom (peso 3)
+  if (['telecom','telefon','operadora','5g','4g','fibra','banda larga',
+       'claro','vivo','tim ','oi ','sky ','mvno','espectro','satélite'].some(k => hay.includes(k)))
+    return { label:'Telecom', cls:'sector-telecom' };
+
+  // Tech (default)
+  return { label:'Tech', cls:'sector-tech' };
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   D. BUILD DO CARD SEMANAL
+   Formato padronizado: número de ranking, setor, título
+   contextualizado, resumo e link clicável.
+────────────────────────────────────────────────────────────── */
+function buildWeeklyCard(item, rank) {
+  const sector  = weeklyClassifySector(item);
+  const m       = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dateStr = `${String(item.date.getDate()).padStart(2,'0')} ${m[item.date.getMonth()]}`;
+  const preview = item.desc.slice(0, 280) + (item.desc.length > 280 ? '…' : '');
+
+  return `
+    <article class="weekly-card" style="animation:fadeUp .45s ease ${rank * 60}ms both">
+      <div class="wcard-meta">
+        <span class="wcard-num">#${rank}</span>
+        <span class="wcard-sector ${sector.cls}">${sector.label}</span>
+        <span class="wcard-date">${dateStr}</span>
+      </div>
+      <h3 class="wcard-title">${esc(item.title)}</h3>
+      <p class="wcard-body">${esc(preview)}</p>
+      <div class="wcard-footer">
+        <span class="wcard-footer-label">Fonte:</span>
+        <a class="wcard-source-link"
+           href="${esc(item.link)}"
+           target="_blank" rel="noopener noreferrer">
+          ${esc(item.source)} ↗
+        </a>
+      </div>
+    </article>`;
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   E. FUNÇÃO PRINCIPAL — GERAR RESUMO SEMANAL
+   Chamada pelo clique no botão "Gerar resumo da semana".
+   Reutiliza fetchWithFallback, parseXML, isRelevant, dedup,
+   classify e CAT_WEIGHT do código existente.
+────────────────────────────────────────────────────────────── */
+async function loadWeeklySummary() {
+  const btn = document.getElementById('btn-weekly');
+  btn.disabled = true;
+
+  // Troca de telas
+  document.getElementById('weekly-load-screen').style.display = 'none';
+  document.getElementById('weekly-loading').style.display     = 'flex';
+  document.getElementById('weekly-content').style.display     = 'none';
+
+  // Mensagens rotativas
+  const msgs = [
+    'Buscando notícias da semana…',
+    'Convertendo feeds RSS…',
+    'Calculando janela semanal…',
+    'Rankeando por relevância…',
+    'Selecionando top 10…',
+  ];
+  let mi = 0;
+  const loadTxt = document.getElementById('weekly-loading-text');
+  const msgInt  = setInterval(() => { loadTxt.textContent = msgs[++mi % msgs.length]; }, 700);
+
+  // Recalcula janela a cada execução (garante semana corrente)
+  const { start, end } = getWeekWindow();
+  updateWeeklyRangeBadge();
+
+  // Fetch paralelo — reutiliza FEEDS e fetchWithFallback do §2/§5
+  const results = await Promise.allSettled(
+    FEEDS.map(async feed => {
+      const xml = await fetchWithFallback(feed.url);
+      if (!xml) throw new Error(feed.name);
+      return { items: parseXML(xml, feed.name), name: feed.name };
+    })
+  );
+
+  clearInterval(msgInt);
+
+  // Consolida itens e exibe status dos feeds
+  let allItems    = [];
+  const feedMeta  = document.getElementById('weekly-feed-meta');
+  const errorDiv  = document.getElementById('weekly-error');
+  let failCount   = 0;
+  feedMeta.innerHTML = '';
+
+  results.forEach((res, i) => {
+    const feed = FEEDS[i];
+    if (res.status === 'fulfilled') {
+      allItems = allItems.concat(res.value.items);
+      feedMeta.insertAdjacentHTML('beforeend',
+        `<span class="feed-meta-item"><span class="feed-dot"></span>${esc(feed.name)} (${res.value.items.length})</span>`);
+    } else {
+      failCount++;
+      feedMeta.insertAdjacentHTML('beforeend',
+        `<span class="feed-meta-item"><span class="feed-dot err"></span>${esc(feed.name)} (indisponível)</span>`);
+    }
+  });
+
+  if (failCount === FEEDS.length) {
+    errorDiv.innerHTML = `<div class="error-banner">⚠ Todos os feeds estão inacessíveis. Verifique a conexão e tente novamente.</div>`;
+  }
+
+  // ── PIPELINE DE FILTROS SEMANAIS ──────────────────────────────
+  // 1. Janela semanal (segunda-feira 00:00 → hoje 23:59)
+  const inWindow = allItems.filter(item => isInWeekWindow(item, start, end));
+
+  // 2. Relevância temática (reutiliza isRelevant do §7)
+  const relevant = inWindow.filter(isRelevant);
+
+  // 3. Deduplicação (reutiliza dedup do §7)
+  const unique = dedup(relevant);
+
+  // 4. Rank por peso editorial (reutiliza classify e CAT_WEIGHT do §8/§9)
+  //    Earnings (7) > M&A (6) > Regulação (5) > Investimentos (4) > ...
+  const ranked = unique
+    .map(item => ({ item, cat: classify(item), score: CAT_WEIGHT[classify(item).cat] ?? 0 }))
+    .sort((a, b) => b.score - a.score || b.item.date - a.item.date);
+
+  // 5. Top 10
+  const top10 = ranked.slice(0, 10);
+
+  // ── RENDER ────────────────────────────────────────────────────
+  document.getElementById('weekly-loading').style.display = 'none';
+  document.getElementById('weekly-content').style.display = 'block';
+
+  const cardsDiv = document.getElementById('weekly-cards');
+  cardsDiv.innerHTML = '';
+
+  if (top10.length < 3) {
+    // Menos de 3 notícias = avisa o usuário
+    cardsDiv.innerHTML = `
+      <div class="weekly-empty">
+        <span>📭</span>
+        Não há notícias suficientes para gerar o resumo semanal.<br>
+        <span style="font-size:.65rem;opacity:.5;display:block;margin-top:.5rem">
+          Tente novamente mais tarde ou em outro dia da semana.
+        </span>
+      </div>`;
+  } else {
+    cardsDiv.innerHTML = top10.map((r, i) => buildWeeklyCard(r.item, i + 1)).join('');
+  }
+
+  // Reativa botão (permite regerar)
+  btn.disabled    = false;
+  btn.textContent = '🔄 Atualizar resumo';
+}
+
+// Bind do botão de resumo semanal
+document.getElementById('btn-weekly').addEventListener('click', loadWeeklySummary);
 </script>
 </body>
 </html>
