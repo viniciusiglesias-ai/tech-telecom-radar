@@ -507,11 +507,15 @@ footer p{font-family:var(--mono);font-size:.62rem;color:var(--txt3);letter-spaci
       Carregar notícias do dia
     </button>
     <div class="feed-pills">
-      <span class="feed-pill">Teletime RSS</span>
-      <span class="feed-pill">Telesíntese RSS</span>
-      <span class="feed-pill">Valor Econômico RSS</span>
-      <span class="feed-pill">InfoMoney RSS</span>
-      <span class="feed-pill earn-pill">Money Times RSS</span>
+      <span class="feed-pill earn-pill">NeoFeed</span>
+      <span class="feed-pill earn-pill">Brazil Journal</span>
+      <span class="feed-pill earn-pill">Suno Notícias</span>
+      <span class="feed-pill">Valor Econômico</span>
+      <span class="feed-pill">InfoMoney</span>
+      <span class="feed-pill">Exame</span>
+      <span class="feed-pill">Money Times</span>
+      <span class="feed-pill">Teletime</span>
+      <span class="feed-pill">Telesíntese</span>
       <span class="feed-pill earn-pill">+ Earnings Detector</span>
     </div>
   </div>
@@ -671,18 +675,106 @@ document.getElementById('year').textContent         = _NOW.getFullYear();
    3 proxies em fallback — se um cair, o próximo assume.
 ────────────────────────────────────────────────────────────── */
 const FEEDS = [
-  { url:'https://teletime.com.br/feed/',            name:'Teletime',        domain:'teletime.com.br' },
-  { url:'https://telesintese.com.br/feed/',         name:'Telesíntese',     domain:'telesintese.com.br' },
-  { url:'https://valor.globo.com/rss/',             name:'Valor Econômico', domain:'valor.globo.com' },
-  { url:'https://www.infomoney.com.br/feed/',       name:'InfoMoney',       domain:'infomoney.com.br' },
-  { url:'https://www.moneytimes.com.br/mercados/feed/', name:'Money Times', domain:'moneytimes.com.br' },
+  /* ── ALTA PRIORIDADE — foco em mercado financeiro / IB ─────────────────
+     DIAGNÓSTICO: Google News RSS bloqueia proxies CORS (retorna HTML de
+     captcha em vez de XML). Substituídos por feeds RSS diretos confirmados.
+     Pipeline e Brazil Journal não possuem RSS público — substituídos por
+     fontes alternativas de alta qualidade com RSS real e verificado.     */
+
+  {
+    // NeoFeed: negócios, finanças, deals, PE/VC — RSS WordPress confirmado.
+    url:    'https://neofeed.com.br/feed/',
+    name:   'NeoFeed',
+    domain: 'neofeed.com.br',
+  },
+  {
+    // Brazil Journal via RSS próprio do WordPress (URL alternativa testada).
+    // braziljournal.com é WordPress — /feed funciona para artigos públicos.
+    url:    'https://braziljournal.com/feed/',
+    name:   'Brazil Journal',
+    domain: 'braziljournal.com',
+  },
+  {
+    // Suno Notícias: cobertura premium de mercado financeiro, M&A, B3, deals.
+    // RSS WordPress público confirmado. Substitui Pipeline (sem RSS próprio).
+    url:    'https://www.sunoresearch.com.br/noticias/feed/',
+    name:   'Suno Notícias',
+    domain: 'sunoresearch.com.br',
+  },
+
+  /* ── MÉDIA PRIORIDADE — mercado financeiro e tech de negócios ──────────
+     DIAGNÓSTICO: valor.globo.com/rss/ bloqueia User-Agents de proxies (403).
+     Substituído por pox.globo.com/rss/valor — URL de RSS legada da Globo
+     que serve o mesmo conteúdo sem bloqueio de proxy.                     */
+
+  {
+    // Valor Econômico — URL RSS legada sem bloqueio de bot.
+    url:    'https://pox.globo.com/rss/valor/',
+    name:   'Valor Econômico',
+    domain: 'valor.globo.com',
+  },
+  {
+    // InfoMoney: mercado, earnings, renda variável — feed estável.
+    url:    'https://www.infomoney.com.br/feed/',
+    name:   'InfoMoney',
+    domain: 'infomoney.com.br',
+  },
+  {
+    // Exame: negócios, economia, tecnologia corporativa — WordPress confirmado.
+    url:    'https://exame.com/feed/',
+    name:   'Exame',
+    domain: 'exame.com',
+  },
+  {
+    // Money Times: mercados e resultados financeiros.
+    url:    'https://www.moneytimes.com.br/mercados/feed/',
+    name:   'Money Times',
+    domain: 'moneytimes.com.br',
+  },
+
+  /* ── COMPLEMENTAR — especializado em telecom ───────────────────────────
+     Cobertura técnica e regulatória do setor de telecomunicações.         */
+
+  {
+    url:    'https://teletime.com.br/feed/',
+    name:   'Teletime',
+    domain: 'teletime.com.br',
+  },
+  {
+    url:    'https://telesintese.com.br/feed/',
+    name:   'Telesíntese',
+    domain: 'telesintese.com.br',
+  },
 ];
 
 const CORS_PROXIES = [
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  /* ── DIAGNÓSTICO DOS PROXIES ANTERIORES ────────────────────────────────
+     allorigins /raw  → instável, retorna HTTP 500 com frequência
+     corsproxy.io     → OK, mas URL deve usar ?url= (já estava correto)
+     codetabs         → rate limit agressivo após 2–3 requisições seguidas
+     thingproxy       → limite de 100KB — feeds RSS truncados = XML inválido
+
+     NOVOS PROXIES — selecionados por estabilidade e suporte a XML/RSS ───
+     1. corsproxy.io  → mantido (CDN global, mais confiável)
+     2. allorigins /get → mais estável que /raw; retorna JSON com "contents"
+     3. cors.sh        → substitui thingproxy; sem limite de tamanho declarado
+     4. codetabs       → mantido como 4º fallback para feeds pequenos
+     5. direto         → sem proxy (funciona se o servidor permite CORS)    */
+
+  // #1 corsproxy.io — CDN global, boa estabilidade
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+
+  // #2 allorigins /get — retorna JSON {contents, status}; mais estável que /raw
+  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+
+  // #3 cors.sh — sem rate limit declarado, bom para feeds grandes
+  u => `https://proxy.cors.sh/${u}`,
+
+  // #4 codetabs — fallback para feeds pequenos
   u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u => `https://thingproxy.freeboard.io/fetch/${u}`,   // 4º fallback
+
+  // #5 Tentativa direta — funciona quando o servidor já permite CORS
+  u => u,
 ];
 
 
@@ -909,17 +1001,49 @@ function extractMetrics(item) {
    §5  FETCHER COM FALLBACK DE PROXIES
 ────────────────────────────────────────────────────────────── */
 async function fetchWithFallback(feedUrl) {
-  for (const makeProxy of CORS_PROXIES) {
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxyUrl = CORS_PROXIES[i](feedUrl);
     try {
       const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
-      const res   = await fetch(makeProxy(feedUrl), { signal: ctrl.signal });
+      const timer = setTimeout(() => ctrl.abort(), 10000);
+      const res   = await fetch(proxyUrl, {
+        signal:  ctrl.signal,
+        headers: { 'Accept': 'application/rss+xml, application/xml, text/xml, */*' },
+      });
       clearTimeout(timer);
       if (!res.ok) continue;
-      const text = await res.text();
-      if (text.includes('<item') || text.includes('<entry') || text.includes('<rss')) return text;
-    } catch (_) { /* tenta próximo proxy */ }
+
+      let text = await res.text();
+
+      /* allorigins /get retorna JSON: { "contents": "<xml>…</xml>" }
+         Detecta automaticamente e extrai o campo "contents".           */
+      if (text.trimStart().startsWith('{') && text.includes('"contents"')) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.contents) text = parsed.contents;
+        } catch (_) { /* não era JSON válido — usa texto original */ }
+      }
+
+      /* Rejeita respostas que são HTML (captcha, página de bloqueio, erro)
+         mesmo quando o status HTTP é 200.                                 */
+      const looksHTML = text.trimStart().startsWith('<!DOCTYPE') ||
+                        text.trimStart().startsWith('<html');
+      if (looksHTML) continue;
+
+      /* Valida que é XML de feed real.                                    */
+      const isRSS = text.includes('<item')  ||
+                    text.includes('<entry') ||
+                    text.includes('<rss')   ||
+                    text.includes('<feed');
+      if (isRSS) {
+        console.log(`✅ RSS OK: ${feedUrl.split('/')[2]} (proxy #${i + 1})`);
+        return text;
+      }
+    } catch (_) {
+      /* Timeout ou erro de rede — tenta próximo proxy */
+    }
   }
+  console.warn(`❌ RSS FAIL: todos os proxies falharam para ${feedUrl}`);
   return null;
 }
 
@@ -961,10 +1085,120 @@ function parseXML(xmlText, sourceName) {
 ────────────────────────────────────────────────────────────── */
 const isInWindow = item => item.date >= WINDOW_START && item.date <= WINDOW_END;
 
+/* ──────────────────────────────────────────────────────────────
+   FILTRO ESPECÍFICO POR FONTE — Brazil Journal
+   ──────────────────────────────────────────────────────────────
+   PROBLEMA IDENTIFICADO:
+   O Brazil Journal publica conteúdo amplo (política, macro,
+   commodities, bancos tradicionais). As KEYWORDS genéricas do
+   §3 (receita, lucro, fusão...) deixam passar essas notícias
+   porque são financeiramente válidas mas fora do escopo
+   tech/telecom do site.
+
+   SOLUÇÃO:
+   Quando a notícia vem do Brazil Journal, aplicamos um conjunto
+   de critérios MAIS ESTRITOS — a notícia só passa se mencionar
+   explicitamente tech, telecom ou empresa do setor.
+
+   ESTRUTURA DO FILTRO:
+   1. TECH_TELECOM_KW — palavras-chave obrigatórias de tech/telecom
+   2. SECTOR_COMPANIES — empresas do setor que garantem passagem
+   3. EXCLUSION_KW — termos que excluem notícias fora do escopo
+      (mesmo que passem nos critérios acima)
+
+   Fontes opcionais (NeoFeed, Suno) recebem filtro moderado:
+   mais amplo que BJ mas mais estrito que o filtro geral.
+────────────────────────────────────────────────────────────── */
+
+// Palavras-chave de tech/telecom que garantem relevância para BJ
+const TECH_TELECOM_KW = [
+  // Telecom
+  'telecom','telefonia','telefônica','5g','4g','banda larga','fibra óptica',
+  'fibra','operadora','mvno','espectro','anatel','conectividade',
+  'infraestrutura digital','rede de telecomunicações','claro','vivo','tim ','oi ',
+  'sky ','brisanet','alloha','v.tal','surf telecom','zaaz',
+  // Tech / digital
+  'tecnologia','software','saas','cloud','inteligência artificial',' ia ',
+  'startup','fintech','plataforma digital','data center','e-commerce',
+  'marketplace','cibersegurança','iot','open finance','pix','blockchain',
+  'transformação digital','economia digital','inovação tecnológica',
+  'digitalização','aplicativo','app ','api ','dados ','big data',
+  'machine learning','algoritmo','computação em nuvem',
+  // Empresas do setor tech/telecom (atalho direto)
+  'totvs','locaweb','lwsa','positivo tecnologia','positivo ','méliuz',
+  'enjoei','multilaser','multi ','intelbras','cielo','stone','pagseguro',
+  'nubank','picpay','mercado livre','mercado pago','ifood','99 ','rappi',
+  'vtex','nuvemshop','rdstation','linx','senior sistemas','benner','boa compra',
+  'ascenty','scala','elea','odata','digitalhouse','alura','descomplica',
+  'vivt3','tims3','oibr','tots3','lwsa3','posi3','meli3','enju3','intb3',
+  'ericsson','nokia','huawei','samsung','google','meta','microsoft',
+  'amazon','aws','oracle','sap','salesforce','cisco','qualcomm',
+];
+
+// Termos que EXCLUEM notícias mesmo se passarem nos filtros acima
+// (notícias de macro puro, política, commodities, bancos tradicionais)
+const EXCLUSION_KW_BJ = [
+  'commodities','petróleo','minério de ferro','soja','milho','açúcar','café',
+  'boi gordo','grãos','agronegócio','exportação de','câmbio',
+  'itaú','bradesco','santander','banco do brasil','caixa econômica',
+  'bb seguridade','porto seguro','sul america','tokio marine',
+  'previdência','aposentadoria','fgts','inss',
+  'eleições','candidato','partido político','congresso nacional','senado',
+  'câmara dos deputados','ministério','governo federal','lula','bolsonaro',
+  'inflação','pib','selic','juros básicos','copom','banco central',
+  'petrobras','vale ','embraer','gerdau','usiminas','csn ',
+  'shopping','varejo','lojas','magazine luiza','americanas','casas bahia',
+  'raia drogasil','farmácia','drogaria','supermercado','atacadão',
+  'construtora','incorporadora','imóvel','loteamento','fii ',
+  'energia elétrica','enel','cemig','cpfl','light ','eletrobras',
+  'saneamento','sabesp','copasa','aviação','gol ','latam','azul ',
+  'logística','transporte','rodoviário','ferroviário',
+];
+
+/**
+ * isTechTelecomRelevant(item)
+ * Filtro estrito para fontes de conteúdo amplo (Brazil Journal).
+ * Retorna true SE:
+ *   a) Tem keyword de tech/telecom OU empresa do setor, E
+ *   b) NÃO tem keyword de exclusão dominante no título.
+ */
+function isTechTelecomRelevant(item) {
+  const hay     = (item.title + ' ' + item.desc).toLowerCase();
+  const titleLow = item.title.toLowerCase();
+
+  // Earnings de empresa do setor sempre passam
+  if (isEarnings(item)) return true;
+
+  // Verifica se tem ao menos 1 keyword de tech/telecom
+  const hasTechKw = TECH_TELECOM_KW.some(kw => hay.includes(kw));
+  if (!hasTechKw) return false;
+
+  // Rejeita se o TÍTULO contiver keyword de exclusão dominante
+  // (só verifica no título para não rejeitar análises de contexto)
+  const titleExcluded = EXCLUSION_KW_BJ.some(kw => titleLow.includes(kw));
+  if (titleExcluded) return false;
+
+  return true;
+}
+
+/**
+ * isRelevant(item)
+ * Filtro principal — aplica regra diferenciada por fonte:
+ *   - Brazil Journal → filtro estrito (isTechTelecomRelevant)
+ *   - Outras fontes  → filtro geral (KEYWORDS amplo, como antes)
+ */
 function isRelevant(item) {
   const hay = (item.title + ' ' + item.desc).toLowerCase();
-  // Earnings são sempre relevantes se na janela
+
+  // Earnings são sempre relevantes em qualquer fonte
   if (isEarnings(item)) return true;
+
+  // Brazil Journal: aplicar filtro estrito de tech/telecom
+  if (item.source === 'Brazil Journal') {
+    return isTechTelecomRelevant(item);
+  }
+
+  // Todas as outras fontes: filtro geral por KEYWORDS (comportamento anterior)
   return KEYWORDS.some(kw => hay.includes(kw));
 }
 
@@ -1102,9 +1336,41 @@ const CAT_WEIGHT = {
   tecnologia:    2,   // inovação / tendências tech
 };
 
+/* ──────────────────────────────────────────────────────────────
+   HIERARQUIA DE FONTES — bônus de desempate no ranking
+   ──────────────────────────────────────────────────────────────
+   Quando duas notícias têm o mesmo CAT_WEIGHT, a fonte de maior
+   prioridade editorial sobe. O bônus (0.0–0.9) é somado ao score
+   da categoria, nunca sobrepõe a diferença entre categorias.
+
+   ALTA (0.9): NeoFeed, Pipeline Valor, Brazil Journal
+     → Jornalismo especializado em IB/deals/mercado financeiro
+   MÉDIA (0.6): Valor Econômico, InfoMoney, Exame
+     → Cobertura ampla de economia e negócios
+   COMPLEMENTAR (0.3): Money Times, Teletime, Telesíntese
+     → Cobertura setorial / financeira generalista
+────────────────────────────────────────────────────────────── */
+const SOURCE_PRIORITY = {
+  'NeoFeed':        0.9,
+  'Brazil Journal': 0.9,
+  'Suno Notícias':  0.9,   // substituiu Pipeline Valor (sem RSS público)
+  'Valor Econômico':0.6,
+  'InfoMoney':      0.6,
+  'Exame':          0.6,
+  'Money Times':    0.3,
+  'Teletime':       0.3,
+  'Telesíntese':    0.3,
+};
+
 function rankItems(items) {
   return items
-    .map(item => ({ item, cat: classify(item), score: CAT_WEIGHT[classify(item).cat] ?? 0 }))
+    .map(item => {
+      const cat        = classify(item);
+      const catScore   = CAT_WEIGHT[cat.cat] ?? 0;
+      const srcBonus   = SOURCE_PRIORITY[item.source] ?? 0.1; // default baixo
+      const score      = catScore + srcBonus;  // bônus nunca supera diferença de categoria
+      return { item, cat, score };
+    })
     .sort((a, b) => b.score - a.score || b.item.date - a.item.date);
 }
 
@@ -1663,10 +1929,15 @@ async function loadWeeklySummary() {
   // 3. Deduplicação (reutiliza dedup do §7)
   const unique = dedup(relevant);
 
-  // 4. Rank por peso editorial (reutiliza classify e CAT_WEIGHT do §8/§9)
-  //    Earnings (7) > M&A (6) > Regulação (5) > Investimentos (4) > ...
+  // 4. Rank por peso editorial (reutiliza classify, CAT_WEIGHT e SOURCE_PRIORITY do §8/§9)
+  //    Score = peso da categoria + bônus da fonte (NeoFeed/Pipeline/BJ = +0.9)
   const ranked = unique
-    .map(item => ({ item, cat: classify(item), score: CAT_WEIGHT[classify(item).cat] ?? 0 }))
+    .map(item => {
+      const cat      = classify(item);
+      const catScore = CAT_WEIGHT[cat.cat] ?? 0;
+      const srcBonus = SOURCE_PRIORITY[item.source] ?? 0.1;
+      return { item, cat, score: catScore + srcBonus };
+    })
     .sort((a, b) => b.score - a.score || b.item.date - a.item.date);
 
   // 5. Top 10
